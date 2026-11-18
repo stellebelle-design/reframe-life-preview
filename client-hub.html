@@ -135,6 +135,11 @@
           <div class="admin-actions"><button class="admin-save" type="submit" id="adminSave">Save recipe</button><button class="admin-cancel" type="button" id="adminCancel" hidden>Cancel edit</button><span id="adminMessage" role="status" aria-live="polite"></span></div>
         </form>
         <div class="admin-list-wrap"><h3>Your recipes</h3><div id="adminRecipeList" class="admin-recipe-list"></div></div>
+        <div class="admin-list-wrap checkin-admin-wrap">
+          <div class="admin-submissions-heading"><div><h3>Weekly client check-ins</h3><p class="section-intro">Review clients' wellbeing ratings, wins and requests for support.</p></div><button type="button" class="admin-row-button" id="refreshCheckins">Refresh check-ins</button></div>
+          <p id="checkinAdminMessage" class="admin-status" role="status" aria-live="polite">Check-ins will appear here.</p>
+          <div id="checkinAdminList" class="onboarding-admin-list"></div>
+        </div>
         <div class="admin-list-wrap onboarding-admin-wrap">
           <div class="admin-submissions-heading"><div><h3>Client questionnaires</h3><p class="section-intro">Private submissions from clients with paid or active programmes.</p></div><button type="button" class="admin-row-button" id="refreshOnboarding">Refresh submissions</button></div>
           <p id="onboardingAdminMessage" class="admin-status" role="status" aria-live="polite">Submissions will appear here.</p>
@@ -207,6 +212,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
   <script src="client-hub.js?v=20261118-checkin1"></script>
-  <script src="admin-onboarding.js?v=20261118-1"></script>
+  <script src="admin-onboarding.js?v=20261118-checkins1"></script>
 </body>
 </html>
