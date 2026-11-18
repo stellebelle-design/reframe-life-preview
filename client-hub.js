@@ -290,7 +290,7 @@
     loginScreen.hidden = true;
     hubShell.hidden = false;
     const { data: adminRecord } = await client.from("admin_users").select("user_id").eq("user_id", session.user.id).maybeSingle();
-    if (adminPanel) adminPanel.hidden = !adminRecord;
+    if (adminPanel) adminPanel.hidden = true; // Navigation controls when the private admin view is shown.
     const adminNav=document.querySelector("#sidebarAdmin"); if(adminNav)adminNav.hidden=!adminRecord;
     // Make the progress destination available immediately after authentication.
     // Review retrieval happens independently and can show its own empty/error state.
