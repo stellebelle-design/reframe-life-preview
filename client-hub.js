@@ -153,8 +153,9 @@
         if (historyPanel) historyPanel.hidden = true;
         return;
       }
-      if (checkinHeading) checkinHeading.hidden = false;
-      form.hidden = false;
+      const { data: programmeSchedule, error: scheduleError } = await client.from("client_programme_schedules").select("programme_start_date").eq("user_id", userId).maybeSingle();
+      if (scheduleError) throw scheduleError;
+      const programmeStart = programmeSchedule?.programme_start_date || null;
       const visibleHistoryPanel = history.closest(".checkin-history");
       if (visibleHistoryPanel) visibleHistoryPanel.hidden = false;
       section.hidden = false;
@@ -164,19 +165,22 @@
       const localDate = d => [d.getFullYear(), String(d.getMonth()+1).padStart(2,"0"), String(d.getDate()).padStart(2,"0")].join("-");
       const weekInput = document.querySelector("#checkinWeek");
       const currentWeekStart = localDate(monday);
-      if (weekInput) {
-        weekInput.value = currentWeekStart;
-        weekInput.readOnly = true;
-      }
+      const todayString = localDate(today);
+      const isSunday = today.getDay() === 0;
+      const programmeHasStarted = !!programmeStart && todayString >= programmeStart;
+      const checkinDueToday = isSunday && programmeHasStarted;
+      if (weekInput) { weekInput.value = currentWeekStart; weekInput.readOnly = true; }
       let hasSubmittedThisWeek = false;
       const setCheckinAvailability = submitted => {
         hasSubmittedThisWeek = submitted;
-        form.querySelectorAll("input, select, textarea, button[type='submit']").forEach(control => {
-          control.disabled = submitted;
-        });
-        if (message && submitted) {
-          message.textContent = "You've already submitted your check-in for this week. You can view it below, and your next check-in will be available from next Monday.";
-        }
+        const showForm = checkinDueToday && !submitted;
+        form.hidden = !showForm;
+        if (checkinHeading) checkinHeading.hidden = !showForm;
+        form.querySelectorAll("input, select, textarea, button[type='submit']").forEach(control => { control.disabled = submitted || !checkinDueToday; });
+        if (message && submitted) message.textContent = "You've already submitted this week's check-in. Your next check-in will appear next Sunday.";
+        else if (message && isSunday && !programmeStart) message.textContent = "Your coach will add your programme start date before your check-ins begin.";
+        else if (message && isSunday && !programmeHasStarted) message.textContent = "Your weekly check-ins will begin on your programme start date.";
+        else if (message && !isSunday) message.textContent = "";
       };
       async function refreshHistory() {
         const { data, error } = await client.from("client_checkins")
@@ -302,9 +306,14 @@
     async function refreshReviews(){
       const {data:reviews,error}=await client.from("client_progress_reviews").select("period_start,period_end,progress_summary,wins,challenges,next_goals,coach_feedback,updated_at").eq("user_id",userId).order("period_start",{ascending:false}).limit(12);if(error)throw error;
       const {data:reflections,error:reflectionError}=await client.from("client_progress_reflections").select("period_start,what_went_well,proud_of,challenging,next_focus,updated_at").eq("user_id",userId);if(reflectionError)throw reflectionError;
+      const {data:schedule,error:scheduleError}=await client.from("client_programme_schedules").select("programme_start_date").eq("user_id",userId).maybeSingle();if(scheduleError)throw scheduleError;
+      const now=new Date(),today=[now.getFullYear(),String(now.getMonth()+1).padStart(2,"0"),String(now.getDate()).padStart(2,"0")].join("-"),isSunday=now.getDay()===0;
       const byPeriod=new Map((reflections||[]).map(x=>[x.period_start,x]));list.replaceChildren();
       if(!reviews?.length){list.textContent="Your four-week reviews will appear here when your coach shares them.";return;}
       reviews.forEach(r=>{
+        const reflection=byPeriod.get(r.period_start)||{};
+        const isDue=isSunday && !!schedule?.programme_start_date && today>=r.period_end && today>=schedule.programme_start_date;
+        if(!isDue && !reflection.updated_at)return;
         const card=document.createElement("article");card.className="checkin-history-card progress-review-card";
         const fmt=d=>new Date(d+"T12:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
         const toggle=document.createElement("button");toggle.type="button";toggle.className="progress-review-toggle";toggle.setAttribute("aria-expanded","false");
@@ -313,7 +322,7 @@
         const body=document.createElement("div");body.className="progress-review-body";body.hidden=true;
         [["Overall progress",r.progress_summary],["Wins and positive changes",r.wins],["Challenges",r.challenges],["Goals for the next four weeks",r.next_goals]].forEach(([label,value])=>{if(value){const p=document.createElement("p"),strong=document.createElement("strong");strong.textContent=label+": ";p.append(strong,document.createTextNode(value));body.append(p);}});
         if(r.coach_feedback){const box=document.createElement("div");box.className="checkin-coach-feedback";const strong=document.createElement("strong");strong.textContent="A note from your coach";const p=document.createElement("p");p.textContent=r.coach_feedback;box.append(strong,p);body.append(box);}
-        const reflection=byPeriod.get(r.period_start)||{},form=document.createElement("form");form.className="progress-client-reflection";
+        const form=document.createElement("form");form.className="progress-client-reflection";
         const title=document.createElement("h4");title.textContent="Your four-week reflection";form.append(title);
         const fields=[["what_went_well","What has gone well over the last four weeks?"],["proud_of","What are you most proud of?"],["challenging","What has felt challenging, or where would you like support?"],["next_focus","What would you like to focus on over the next four weeks?"]],inputs={};
         fields.forEach(([key,label])=>{const wrap=document.createElement("label");wrap.textContent=label;const area=document.createElement("textarea");area.rows=3;area.maxLength=3000;area.placeholder="Write as much or as little as feels useful…";area.value=reflection[key]||"";wrap.append(area);form.append(wrap);inputs[key]=area;});
