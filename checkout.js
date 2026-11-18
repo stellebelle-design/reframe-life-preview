@@ -207,7 +207,8 @@
             await loadActionsResult.actions.confirm({ formConfirmEvent: event });
           } catch (error) {
             console.error("Stripe payment confirmation error:", error);
-            showStatus("Your payment couldn't be confirmed. Please check the form and try again.", true);
+            const detail = error?.message || error?.type || "Unknown Stripe confirmation error";
+            showStatus("Stripe couldn't confirm the payment: " + detail, true);
           }
         });
         showStatus("Your secure payment form is ready.");
