@@ -17,6 +17,27 @@
   const signedInEmail = document.querySelector("#signed-in-email");
   const accountSignOutButton = document.querySelector("#account-signout-button");
   const productButtons = document.querySelectorAll("[data-product]");
+  const requestedProduct = new URLSearchParams(window.location.search).get("product");
+  const validProductKeys = [
+    "personalised_programme",
+    "coaching_4_week",
+    "coaching_8_week",
+    "coaching_12_week",
+    "coaching_6_month"
+  ];
+  const selectedProduct = validProductKeys.includes(requestedProduct) ? requestedProduct : null;
+
+  // If the visitor chose a programme on the website, show only that
+  // programme after sign-in so they do not have to choose twice.
+  if (selectedProduct) {
+    productButtons.forEach((button) => {
+      if (button.dataset.product !== selectedProduct) {
+        button.closest("article").hidden = true;
+      } else {
+        button.textContent = "Continue to secure checkout";
+      }
+    });
+  }
   const config = window.REFRAME_SUPABASE_CONFIG;
   const supabase = window.supabase && config?.url && config?.publishableKey
     ? window.supabase.createClient(config.url, config.publishableKey)
@@ -69,7 +90,7 @@
   function unlockCheckout(user) {
     accountGate.querySelector("#account-form").hidden = true;
     signedInSummary.hidden = false;
-    signedInEmail.textContent = "Signed in as " + (user.email || "your account") + ". You can now choose your programme.";
+    signedInEmail.textContent = "Signed in as " + (user.email || "your account") + (selectedProduct ? ". Your selected programme is ready below." : ". You can now choose your programme.");
     products.hidden = false;
   }
 
