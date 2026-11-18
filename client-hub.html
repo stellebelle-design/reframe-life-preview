@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Jost:wght@300;400;500;600&family=Petit+Formal+Script&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="client-hub.css?v=20261118-feedback1">
+  <link rel="stylesheet" href="client-hub.css?v=20261118-progress1">
 </head>
 <body>
   <section class="login-screen" id="loginScreen">
@@ -99,7 +99,7 @@
           </label>
           <div class="checkin-actions"><button type="submit" class="admin-save" id="checkinSubmit">Save my check-in</button><p id="checkinMessage" role="status" aria-live="polite"></p></div>
         </form>
-        <div class="checkin-history"><h3>Your recent check-ins</h3><div id="checkinHistory"><p>Loading your check-ins…</p></div></div>
+        <div class="checkin-history"><h3>Your recent check-ins</h3><div id="checkinHistory"><p>Loading your check-ins…</p></div></div><div class="progress-review-client" id="clientProgressReviews" hidden><h3>Your four-week progress reviews</h3><div id="clientProgressReviewList"></div></div>
       </section>
 
       <section class="quick-links" aria-label="Resource sections">
@@ -140,7 +140,7 @@
           <p id="checkinAdminMessage" class="admin-status" role="status" aria-live="polite">Check-ins will appear here.</p>
           <div id="checkinAdminList" class="onboarding-admin-list"></div>
         </div>
-        <div class="admin-list-wrap onboarding-admin-wrap">
+        <div class="admin-list-wrap progress-review-admin-wrap"><div class="admin-submissions-heading"><div><h3>Four-week progress reviews</h3><p class="section-intro">Bring together a client’s recent check-ins and record progress and next steps.</p></div><button type="button" class="admin-row-button" id="refreshProgressReviews">Refresh reviews</button></div><p id="progressReviewAdminMessage" class="admin-status" role="status" aria-live="polite">Choose a client to begin.</p><div id="progressReviewAdmin"></div></div><div class="admin-list-wrap onboarding-admin-wrap">
           <div class="admin-submissions-heading"><div><h3>Client questionnaires</h3><p class="section-intro">Private submissions from clients with paid or active programmes.</p></div><button type="button" class="admin-row-button" id="refreshOnboarding">Refresh submissions</button></div>
           <p id="onboardingAdminMessage" class="admin-status" role="status" aria-live="polite">Submissions will appear here.</p>
           <div id="onboardingAdminList" class="onboarding-admin-list"></div>
@@ -211,7 +211,7 @@
   </dialog>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
-  <script src="client-hub.js?v=20261118-feedback1"></script>
-  <script src="admin-onboarding.js?v=20261118-feedback1"></script>
+  <script src="client-hub.js?v=20261118-progress1"></script>
+  <script src="admin-onboarding.js?v=20261118-progress1"></script>
 </body>
 </html>
