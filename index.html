@@ -121,7 +121,7 @@
       <p class="service-tag">A focused starting point</p>
       <p>Four weeks of personalised coaching and support to help you build momentum and work towards your goals.</p>
       <p class="programme-price">£119 <span>one-off</span></p>
-      <a class="btn btn-primary" href="checkout.html?product=coaching_4_week">Buy this programme</a>
+      <a class="btn btn-primary" href="#coaching-details" data-coaching-programme="coaching_4_week">Find out more</a>
     </article>
 
     <article class="service-card programme-card">
@@ -130,7 +130,7 @@
       <p class="service-tag">Build consistency</p>
       <p>Eight weeks of personalised coaching, giving you more time to develop routines and make meaningful progress.</p>
       <p class="programme-price">£219 <span>one-off</span></p>
-      <a class="btn btn-primary" href="checkout.html?product=coaching_8_week">Buy this programme</a>
+      <a class="btn btn-primary" href="#coaching-details" data-coaching-programme="coaching_8_week">Find out more</a>
     </article>
 
     <article class="service-card programme-card">
@@ -139,7 +139,7 @@
       <p class="service-tag">A longer-term approach</p>
       <p>Twelve weeks of personalised coaching and ongoing support to help you build sustainable habits.</p>
       <p class="programme-price">£309 <span>one-off</span></p>
-      <a class="btn btn-primary" href="checkout.html?product=coaching_12_week">Buy this programme</a>
+      <a class="btn btn-primary" href="#coaching-details" data-coaching-programme="coaching_12_week">Find out more</a>
     </article>
 
     <article class="service-card programme-card programme-card-featured">
@@ -148,7 +148,7 @@
       <p class="service-tag">Consistent support, month by month</p>
       <p>Ongoing personalised coaching, billed monthly, with an initial six-month commitment. Please read the applicable terms before purchasing.</p>
       <p class="programme-price">£99 <span>per month</span></p>
-      <a class="btn btn-primary" href="checkout.html?product=coaching_6_month">Buy this programme</a>
+      <a class="btn btn-primary" href="#coaching-details" data-coaching-programme="coaching_6_month">Find out more</a>
     </article>
   </div>
 
@@ -189,6 +189,30 @@
   </div>
 </section>
 
+
+
+<dialog id="coaching-details" class="programme-dialog" aria-labelledby="coaching-dialog-title">
+  <div class="programme-dialog-inner">
+    <button type="button" class="programme-dialog-close" id="close-coaching-details" aria-label="Close programme details">&times;</button>
+    <p class="eyebrow">YOUR REFRAME LIFE PROGRAMME</p>
+    <h2 id="coaching-dialog-title">Coaching Programme</h2>
+    <p class="programme-dialog-price" id="coaching-dialog-price"></p>
+    <p id="coaching-dialog-intro"></p>
+    <h3>What's included</h3>
+    <ul>
+      <li>A personalised training programme shaped around your goals, experience, lifestyle and circumstances.</li>
+      <li>Weekly check-ins to reflect on progress, celebrate wins and identify any support you need.</li>
+      <li>Ongoing guidance and programme adjustments as you work towards your goals.</li>
+      <li>Exercise form guidance and suitable alternatives where appropriate.</li>
+      <li>Access to your Client Hub, including practical recipe inspiration and nutrition resources.</li>
+      <li>One-to-one chat support for questions, encouragement and updates.</li>
+    </ul>
+    <h3>How it works</h3>
+    <p>You'll start with the onboarding process so I can understand your goals, training experience, routine and what matters to you. We'll arrange an initial consultation, then I'll use what we've discussed to shape your coaching around you. Your Client Hub is where you'll access your programme, check-ins and resources.</p>
+    <p id="coaching-dialog-commitment"></p>
+    <a class="btn btn-primary programme-dialog-continue" id="coaching-dialog-buy" href="checkout.html">Buy this programme</a>
+  </div>
+</dialog>
 
 <dialog id="personalised-programme-details" class="programme-dialog" aria-labelledby="personalised-dialog-title">
   <div class="programme-dialog-inner">
@@ -384,6 +408,38 @@
   dialog.addEventListener("click",function(event){
     if(event.target===dialog)dialog.close();
   });
+})();
+</script>
+
+
+<script>
+(function(){
+  const dialog=document.getElementById("coaching-details");
+  const closeButton=document.getElementById("close-coaching-details");
+  if(!dialog||!closeButton)return;
+  const programmes={
+    coaching_4_week:{title:"4-Week Coaching",price:"£119",payment:"one-off payment",intro:"Four weeks of personalised coaching and support to help you build momentum, establish routines and work towards your goals.",commitment:"This programme lasts four weeks and is paid for as a one-off purchase."},
+    coaching_8_week:{title:"8-Week Coaching",price:"£219",payment:"one-off payment",intro:"Eight weeks of personalised coaching, giving you more time to develop consistency, build confidence and make meaningful progress.",commitment:"This programme lasts eight weeks and is paid for as a one-off purchase."},
+    coaching_12_week:{title:"12-Week Coaching",price:"£309",payment:"one-off payment",intro:"Twelve weeks of personalised coaching and ongoing support to help you build sustainable habits and work towards longer-term goals.",commitment:"This programme lasts twelve weeks and is paid for as a one-off purchase."},
+    coaching_6_month:{title:"6-Month Ongoing Coaching",price:"£99",payment:"per month",intro:"Ongoing personalised coaching with consistent support, regular check-ins and guidance as you build habits and work towards your goals.",commitment:"This option is billed at £99 per month with an initial six-month commitment. Please review the applicable terms before purchasing."}
+  };
+  dialog.querySelectorAll("[data-coaching-programme]").forEach(function(button){
+    button.addEventListener("click",function(event){
+      event.preventDefault();
+      const key=button.getAttribute("data-coaching-programme");
+      const item=programmes[key];
+      if(!item)return;
+      document.getElementById("coaching-dialog-title").textContent=item.title;
+      document.getElementById("coaching-dialog-price").innerHTML=item.price+' <span>'+item.payment+'</span>';
+      document.getElementById("coaching-dialog-intro").textContent=item.intro;
+      document.getElementById("coaching-dialog-commitment").textContent=item.commitment;
+      document.getElementById("coaching-dialog-buy").href="checkout.html?product="+key;
+      if(typeof dialog.showModal==="function")dialog.showModal();
+      else dialog.setAttribute("open","");
+    });
+  });
+  closeButton.addEventListener("click",function(){dialog.close();});
+  dialog.addEventListener("click",function(event){if(event.target===dialog)dialog.close();});
 })();
 </script>
 
