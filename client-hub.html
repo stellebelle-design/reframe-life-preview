@@ -34,14 +34,14 @@
       </form>
       <p class="login-help">Access is available to active Reframe Life clients. If you need an account, please contact us.</p>
     </div>
-    <a class="login-back" href="index.html">← Return to the main website</a>
+    <a class="login-back" href="index.html">Return to the main website</a>
   </section>
   <div class="hub-shell" id="hubShell" hidden>
     <header class="hub-header">
       <a class="brand" href="index.html" aria-label="Reframe Life home">reframe <em>life</em></a>
       <div class="header-right">
         <button class="sign-out" id="signOutButton" type="button">Sign out</button>
-        <a class="back-link" href="index.html">Back to website <span aria-hidden="true">↗</span></a>
+        <a class="back-link" href="index.html">Back to website</a>
       </div>
     </header>
 
@@ -84,9 +84,9 @@
           </article>
           <article class="dashboard-card">
             <p class="dashboard-label">A GOOD PLACE TO START</p>
-            <h3>Your next step</h3>
-            <p>Keep your programme details up to date so your support can reflect what you need.</p>
-            <a class="dashboard-link" href="onboarding.html">Open your questionnaire <span aria-hidden="true">↗</span></a>
+            <h3 id="dashboardNextTitle">Your next step</h3>
+            <p id="dashboardNextCopy">We're checking where you are in your Reframe Life journey.</p>
+            <a class="dashboard-link" id="dashboardNextLink" href="onboarding.html">Open your questionnaire</a>
           </article>
         </div>
       </section>
@@ -165,7 +165,12 @@
           <p id="checkinAdminMessage" class="admin-status" role="status" aria-live="polite">Check-ins will appear here.</p>
           <div id="checkinAdminList" class="onboarding-admin-list"></div>
         </div>
-        <div class="admin-list-wrap progress-review-admin-wrap"><div class="admin-submissions-heading"><div><h3>Four-week progress reviews</h3><p class="section-intro">Bring together a client’s recent check-ins and record progress and next steps.</p></div><button type="button" class="admin-row-button" id="refreshProgressReviews">Refresh reviews</button></div><p id="progressReviewAdminMessage" class="admin-status" role="status" aria-live="polite">Choose a client to begin.</p><div id="progressReviewAdmin"></div></div><div class="admin-list-wrap onboarding-admin-wrap">
+        <div class="admin-list-wrap progress-review-admin-wrap"><div class="admin-submissions-heading"><div><h3>Four-week progress reviews</h3><p class="section-intro">Bring together a client’s recent check-ins and record progress and next steps.</p></div><button type="button" class="admin-row-button" id="refreshProgressReviews">Refresh reviews</button></div><p id="progressReviewAdminMessage" class="admin-status" role="status" aria-live="polite">Choose a client to begin.</p><div id="progressReviewAdmin"></div></div><div class="admin-list-wrap programme-readiness-wrap">
+          <div class="admin-submissions-heading"><div><h3>Programme readiness</h3><p class="section-intro">Mark a client's programme as ready once you've finished preparing and shared it with them.</p></div><button type="button" class="admin-row-button" id="refreshProgrammeReadiness">Refresh clients</button></div>
+          <p id="programmeReadinessMessage" class="admin-status" role="status" aria-live="polite">Client questionnaires will appear here.</p>
+          <div id="programmeReadinessList" class="onboarding-admin-list"></div>
+        </div>
+        <div class="admin-list-wrap onboarding-admin-wrap">
           <div class="admin-submissions-heading"><div><h3>Client questionnaires</h3><p class="section-intro">Private submissions from clients with paid or active programmes.</p></div><button type="button" class="admin-row-button" id="refreshOnboarding">Refresh submissions</button></div>
           <p id="onboardingAdminMessage" class="admin-status" role="status" aria-live="polite">Submissions will appear here.</p>
           <div id="onboardingAdminList" class="onboarding-admin-list"></div>
