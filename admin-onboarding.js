@@ -181,6 +181,7 @@
    async function showClient(){
     const uid=select.value,rows=checkins.filter(x=>x.user_id===uid).slice(0,4);
     if(!start.value)start.value=defaultStart(uid);
+    if(!start.value){panel.replaceChildren(make("p","admin-status","Add this client's actual programme start date in the Programme readiness section before creating their first four-week review."));return;}
     const {data:existing,error:reviewError}=await client.from("client_progress_reviews").select("*").eq("user_id",uid).eq("period_start",start.value).maybeSingle();
     if(reviewError)throw reviewError;panel.replaceChildren();
     const savedForClient=(reviewRows||[]).filter(item=>item.user_id===uid).sort((a,b)=>b.period_start.localeCompare(a.period_start));
