@@ -112,7 +112,7 @@
       if (weekInput) weekInput.value = localDate(monday);
       async function refreshHistory() {
         const { data, error } = await client.from("client_checkins")
-          .select("week_start,energy,mood,confidence,consistency,wins,support_needed,created_at")
+          .select("week_start,energy,mood,confidence,consistency,wins,support_needed,coach_feedback,feedback_updated_at,created_at")
           .eq("user_id", userId).order("week_start", { ascending: false }).limit(8);
         if (error) throw error;
         history.replaceChildren();
@@ -129,6 +129,14 @@
           article.append(heading,ratings);
           if(item.wins){const wins=document.createElement("p");wins.textContent="Proud of: "+item.wins;article.append(wins);}
           if(item.support_needed){const support=document.createElement("p");support.textContent="Support wanted: "+item.support_needed;article.append(support);}
+          if(item.coach_feedback){
+            const feedback=document.createElement("div");feedback.className="checkin-coach-feedback";
+            const feedbackTitle=document.createElement("strong");feedbackTitle.textContent="A note from your coach";
+            const feedbackText=document.createElement("p");feedbackText.textContent=item.coach_feedback;
+            feedback.append(feedbackTitle,feedbackText);
+            if(item.feedback_updated_at){const when=document.createElement("small");when.textContent="Shared "+new Date(item.feedback_updated_at).toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});feedback.append(when);}
+            article.append(feedback);
+          }
           history.append(article);
         });
         const latest=data[0];
