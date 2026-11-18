@@ -163,13 +163,29 @@
       monday.setDate(today.getDate() - ((today.getDay() + 6) % 7));
       const localDate = d => [d.getFullYear(), String(d.getMonth()+1).padStart(2,"0"), String(d.getDate()).padStart(2,"0")].join("-");
       const weekInput = document.querySelector("#checkinWeek");
-      if (weekInput) weekInput.value = localDate(monday);
+      const currentWeekStart = localDate(monday);
+      if (weekInput) {
+        weekInput.value = currentWeekStart;
+        weekInput.readOnly = true;
+      }
+      let hasSubmittedThisWeek = false;
+      const setCheckinAvailability = submitted => {
+        hasSubmittedThisWeek = submitted;
+        form.querySelectorAll("input, select, textarea, button[type='submit']").forEach(control => {
+          control.disabled = submitted;
+        });
+        if (message && submitted) {
+          message.textContent = "You've already submitted your check-in for this week. You can view it below, and your next check-in will be available from next Monday.";
+        }
+      };
       async function refreshHistory() {
         const { data, error } = await client.from("client_checkins")
           .select("week_start,energy,mood,confidence,consistency,wins,support_needed,coach_feedback,feedback_updated_at,created_at")
           .eq("user_id", userId).order("week_start", { ascending: false }).limit(8);
         if (error) throw error;
         history.replaceChildren();
+        const submittedForCurrentWeek = (data || []).some(item => item.week_start === currentWeekStart);
+        setCheckinAvailability(submittedForCurrentWeek);
         if (!data?.length) {
           const p=document.createElement("p"); p.textContent="Your check-ins will appear here as you complete them."; history.append(p); return;
         }
@@ -237,6 +253,10 @@
 
       form.addEventListener("submit", async event => {
         event.preventDefault();
+        if (hasSubmittedThisWeek) {
+          if (message) message.textContent = "You've already submitted your check-in for this week. Your next check-in will be available from next Monday.";
+          return;
+        }
         const submit=document.querySelector("#checkinSubmit");
         if(submit){submit.disabled=true;submit.textContent="Saving…";}
         if(message) message.textContent="";
@@ -253,13 +273,17 @@
           };
           const {error}=await client.from("client_checkins").upsert(payload,{onConflict:"user_id,week_start"});
           if(error) throw error;
-          if(message) message.textContent="Your check-in has been saved. Thank you for taking a moment for yourself.";
+          setCheckinAvailability(true);
+          if(message) message.textContent="Your check-in has been saved. Thank you for taking a moment for yourself. Your next check-in will be available from next Monday.";
           await refreshHistory();
         } catch(error) {
           console.error("Could not save client check-in:",error);
           if(message) message.textContent="We couldn't save your check-in just now. Please try again.";
         } finally {
-          if(submit){submit.disabled=false;submit.textContent="Save my check-in";}
+          if(submit) {
+            submit.textContent = hasSubmittedThisWeek ? "Check-in submitted" : "Save my check-in";
+            submit.disabled = hasSubmittedThisWeek;
+          }
         }
       });
     } catch(error) {
