@@ -102,14 +102,17 @@
         const purchased = new Date(item.created_at).getTime();
         return Number.isFinite(purchased) && now < purchased + days * 86400000;
       });
+      const checkinHeading = section.querySelector(".section-heading");
       if (!eligible) {
-        // Keep past progress reviews accessible after coaching ends, but do not
-        // leave the weekly check-in form available to clients without active access.
+        // Keep saved progress reviews accessible, while hiding the weekly
+        // check-in heading, form and history from clients without active coaching.
+        if (checkinHeading) checkinHeading.hidden = true;
         form.hidden = true;
         const historyPanel = history.closest(".checkin-history");
         if (historyPanel) historyPanel.hidden = true;
         return;
       }
+      if (checkinHeading) checkinHeading.hidden = false;
       form.hidden = false;
       const historyPanel = history.closest(".checkin-history");
       if (historyPanel) historyPanel.hidden = false;
