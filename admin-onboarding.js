@@ -160,6 +160,8 @@
    if(accessError)throw accessError;
    const {data:reviewRows,error:reviewsError}=await client.from("client_progress_reviews").select("user_id,period_start").order("period_start",{ascending:false});
    if(reviewsError)throw reviewsError;
+   const {data:reflectionRows,error:reflectionError}=await client.from("client_progress_reflections").select("user_id,period_start,what_went_well,proud_of,challenging,next_focus,updated_at");
+   if(reflectionError)throw reflectionError;
    const ids=[...new Set([...checkins.map(x=>x.user_id),...(accessRows||[]).map(x=>x.user_id),...(reviewRows||[]).map(x=>x.user_id)].filter(Boolean))];
    if(!ids.length){status.textContent="No client accounts found yet.";return;}
    status.textContent=ids.length+" client account"+(ids.length===1?"":"s")+" available.";
@@ -180,6 +182,12 @@
     const {data:existing,error:reviewError}=await client.from("client_progress_reviews").select("*").eq("user_id",uid).eq("period_start",start.value).maybeSingle();
     if(reviewError)throw reviewError;panel.replaceChildren();
     const savedForClient=(reviewRows||[]).filter(item=>item.user_id===uid).sort((a,b)=>b.period_start.localeCompare(a.period_start));
+    const reflection=(reflectionRows||[]).find(item=>item.user_id===uid&&item.period_start===start.value);
+    if(reflection){
+     const box=make("div","progress-client-reflection-admin");box.append(make("h4",null,"Client’s four-week reflection"));
+     [["What went well",reflection.what_went_well],["What they are proud of",reflection.proud_of],["Challenges or support requested",reflection.challenging],["Next focus",reflection.next_focus]].forEach(([label,value])=>{if(value){const p=make("p");p.append(make("strong",null,label+": "),document.createTextNode(value));box.append(p);}});
+     if(reflection.updated_at)box.append(make("small",null,"Submitted "+new Date(reflection.updated_at).toLocaleString()));panel.append(box);
+    }
     if(savedForClient.length){
      const savedList=make("div","progress-review-saved-list");
      savedList.append(make("h4",null,"Your saved reviews — choose one to edit"));
