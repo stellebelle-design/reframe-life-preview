@@ -260,7 +260,12 @@
     const { data: adminRecord } = await client.from("admin_users").select("user_id").eq("user_id", session.user.id).maybeSingle();
     if (adminPanel) adminPanel.hidden = !adminRecord;
     const adminNav=document.querySelector("#sidebarAdmin"); if(adminNav)adminNav.hidden=!adminRecord;
-    const progressNav=document.querySelector("#sidebarProgress"); if(progressNav)progressNav.hidden=document.querySelector("#my-progress")?.hidden ?? true;
+    // Make the progress destination available immediately after authentication.
+    // Review retrieval happens independently and can show its own empty/error state.
+    const progressSection=document.querySelector("#my-progress");
+    if(progressSection)progressSection.hidden=false;
+    const progressNav=document.querySelector("#sidebarProgress");
+    if(progressNav)progressNav.hidden=false;
     await loadClientDashboard(session.user.id);
     await loadClientCheckins(session.user.id);
     const progressNavAfterCheckins=document.querySelector("#sidebarProgress"); if(progressNavAfterCheckins)progressNavAfterCheckins.hidden=document.querySelector("#my-progress")?.hidden ?? true;
