@@ -227,3 +227,64 @@
   .hub-layout{padding-left:24px;padding-right:24px}
   .hub-main .section{padding-left:8px;padding-right:8px}
 }
+
+
+/* Signed-in portal: use a centred content column with navigation across the top */
+.hub-layout{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:0;
+  width:100%;
+  max-width:1240px;
+  padding:0 32px 70px;
+  margin:0 auto;
+}
+.hub-sidebar{
+  position:relative;
+  top:auto;
+  width:100%;
+  min-height:0;
+  padding:16px 0;
+  margin:0;
+  border-right:0;
+  border-bottom:1px solid var(--line);
+}
+.hub-sidebar .sidebar-label,
+.hub-sidebar .sidebar-note{display:none}
+.sidebar-view-switch{max-width:260px;margin:0 auto 12px}
+.sidebar-nav{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:6px;
+  overflow:visible;
+  padding:0;
+}
+.sidebar-link{white-space:nowrap}
+.hub-main{
+  width:100%;
+  max-width:1080px;
+  min-width:0;
+  margin:0 auto;
+  justify-self:auto;
+}
+.hub-main>.welcome,
+.hub-main>.section,
+.hub-main>.client-dashboard,
+.hub-main>.admin-panel,
+.hub-main>.lower-sections,
+.hub-main>.coming-soon{
+  width:100%;
+  max-width:100%;
+}
+.hub-main>.section,
+.hub-main>.client-dashboard{padding-left:clamp(12px,2vw,28px);padding-right:clamp(12px,2vw,28px)}
+@media(max-width:600px){
+  .hub-layout{padding:0 14px 42px}
+  .hub-sidebar{margin:0 -14px;width:calc(100% + 28px);padding:10px 0}
+  .sidebar-view-switch{margin-bottom:8px}
+  .sidebar-nav{justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto;padding:0 12px}
+  .hub-main{max-width:100%}
+}
