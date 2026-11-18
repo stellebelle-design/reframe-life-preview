@@ -156,7 +156,7 @@
   try{
    const {data,error}=await client.from("client_checkins").select("user_id,week_start,energy,mood,confidence,consistency,wins,support_needed").order("week_start",{ascending:false}).limit(500);
    if(error)throw error;checkins=data||[];
-   const {data:accessRows,error:accessError}=await client.from("client_access").select("user_id,access_status").eq("access_status","active");
+   const {data:accessRows,error:accessError}=await client.from("client_access").select("user_id,status").eq("status","active");
    if(accessError)throw accessError;
    const {data:reviewRows,error:reviewsError}=await client.from("client_progress_reviews").select("user_id,period_start").order("period_start",{ascending:false});
    if(reviewsError)throw reviewsError;
