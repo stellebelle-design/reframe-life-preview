@@ -288,3 +288,29 @@
   .sidebar-nav{justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto;padding:0 12px}
   .hub-main{max-width:100%}
 }
+
+
+/* Refined Client Hub navigation typography */
+.sidebar-link{
+  font-family:var(--serif);
+  font-size:1.12rem;
+  font-weight:500;
+  letter-spacing:.01em;
+  line-height:1.25;
+  gap:0;
+}
+.sidebar-link.active{font-weight:600}
+.sidebar-link>span{display:none}
+.quick-card{
+  gap:12px;
+}
+.quick-card strong{
+  font-family:var(--serif);
+  font-size:1.3rem;
+  font-weight:500;
+  letter-spacing:.01em;
+}
+@media(max-width:760px){
+  .sidebar-link{font-size:1.04rem}
+  .quick-card strong{font-size:1.22rem}
+}
