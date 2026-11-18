@@ -69,3 +69,53 @@
   refresh?.addEventListener("click",load);
   window.loadAdminOnboarding=load;
 })();
+
+/* Admin-only weekly check-in viewer. Database RLS controls access independently. */
+(function(){
+  const client=window.reframeSupabaseClient;
+  const list=document.querySelector("#checkinAdminList");
+  const status=document.querySelector("#checkinAdminMessage");
+  const refresh=document.querySelector("#refreshCheckins");
+  if(!client||!list||!status)return;
+  async function load(){
+    status.textContent="Loading weekly check-ins…";list.replaceChildren();
+    if(refresh)refresh.disabled=true;
+    try{
+      const {data,error}=await client.from("client_checkins")
+        .select("id,user_id,week_start,energy,mood,confidence,consistency,wins,support_needed,created_at")
+        .order("week_start",{ascending:false}).limit(100);
+      if(error)throw error;
+      if(!data?.length){status.textContent="No weekly check-ins have been submitted yet.";return;}
+      status.textContent=data.length+" check-in"+(data.length===1?"":"s")+" found.";
+      data.forEach(item=>{
+        const details=document.createElement("details");details.className="onboarding-submission";
+        const summary=document.createElement("summary");
+        const info=document.createElement("div");
+        const title=document.createElement("strong");
+        const date=new Date(item.week_start+"T12:00:00");
+        title.textContent="Week commencing "+date.toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
+        const person=document.createElement("small");person.textContent="Client account: "+item.user_id;
+        info.append(title,person);
+        const tag=document.createElement("small");tag.textContent="VIEW CHECK-IN";
+        summary.append(info,tag);details.append(summary);
+        const body=document.createElement("div");body.className="submission-details";
+        const ratings=document.createElement("p");ratings.className="checkin-history-ratings";
+        ratings.textContent="Energy: "+item.energy+"/5 · Mood: "+item.mood+"/5 · Confidence: "+item.confidence+"/5 · Consistency: "+item.consistency+"/5";
+        body.append(ratings);
+        const addAnswer=(heading,value)=>{
+          const p=document.createElement("p");p.className="checkin-admin-answer";
+          const strong=document.createElement("strong");strong.textContent=heading+": ";
+          p.append(strong,document.createTextNode(value||"Not provided"));body.append(p);
+        };
+        addAnswer("Proud of this week",item.wins);
+        addAnswer("Support requested",item.support_needed);
+        details.append(body);list.append(details);
+      });
+    }catch(error){
+      console.error("Could not load weekly check-ins:",error);
+      status.textContent="We couldn't load check-ins. Please check the table and administrator permissions.";
+    }finally{if(refresh)refresh.disabled=false;}
+  }
+  refresh?.addEventListener("click",load);
+  window.loadAdminCheckins=load;
+})();
