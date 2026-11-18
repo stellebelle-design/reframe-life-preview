@@ -230,95 +230,44 @@
   }
 
   async function loadClientProgressReviews(userId) {
-    const section=document.querySelector("#clientProgressReviews");
-    const list=document.querySelector("#clientProgressReviewList");
-    if(!section||!list)return;
-    section.hidden=false;
-    const progressSection=document.querySelector("#my-progress");
-    if(progressSection)progressSection.hidden=false;
-    const progressNav=document.querySelector("#sidebarProgress");
-    if(progressNav)progressNav.hidden=false;
-
-    async function refreshReviews() {
-      const {data,error}=await client.from("client_progress_reviews")
-        .select("period_start,period_end,progress_summary,wins,challenges,next_goals,coach_feedback,updated_at")
-        .eq("user_id",userId).order("period_start",{ascending:false}).limit(12);
-      if(error)throw error;
-      list.replaceChildren();
-      if(!data?.length){
-        list.textContent="No four-week reviews are showing on this account yet. If your coach has saved one, please contact us so we can check it.";
-        return;
-      }
-      data.forEach(r=>{
-        const card=document.createElement("article");
-        card.className="checkin-history-card progress-review-card";
+    const section=document.querySelector("#clientProgressReviews"),list=document.querySelector("#clientProgressReviewList");
+    if(!section||!list)return;section.hidden=false;
+    const progressSection=document.querySelector("#my-progress");if(progressSection)progressSection.hidden=false;
+    const progressNav=document.querySelector("#sidebarProgress");if(progressNav)progressNav.hidden=false;
+    async function refreshReviews(){
+      const {data:reviews,error}=await client.from("client_progress_reviews").select("period_start,period_end,progress_summary,wins,challenges,next_goals,coach_feedback,updated_at").eq("user_id",userId).order("period_start",{ascending:false}).limit(12);if(error)throw error;
+      const {data:reflections,error:reflectionError}=await client.from("client_progress_reflections").select("period_start,what_went_well,proud_of,challenging,next_focus,updated_at").eq("user_id",userId);if(reflectionError)throw reflectionError;
+      const byPeriod=new Map((reflections||[]).map(x=>[x.period_start,x]));list.replaceChildren();
+      if(!reviews?.length){list.textContent="Your four-week reviews will appear here when your coach shares them.";return;}
+      reviews.forEach(r=>{
+        const card=document.createElement("article");card.className="checkin-history-card progress-review-card";
         const fmt=d=>new Date(d+"T12:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
-        const toggle=document.createElement("button");
-        toggle.type="button";
-        toggle.className="progress-review-toggle";
-        toggle.setAttribute("aria-expanded","false");
-        const heading=document.createElement("span");
-        heading.className="progress-review-date";
-        heading.textContent=fmt(r.period_start)+" – "+fmt(r.period_end);
-        const action=document.createElement("span");
-        action.className="progress-review-action";
-        action.textContent="Read review +";
-        toggle.append(heading,action);
-        const body=document.createElement("div");
-        body.className="progress-review-body";
-        body.hidden=true;
-        [["Overall progress",r.progress_summary],["Wins and positive changes",r.wins],["Challenges",r.challenges],["Goals for the next four weeks",r.next_goals]].forEach(([label,value])=>{
-          if(value){const p=document.createElement("p"),strong=document.createElement("strong");strong.textContent=label+": ";p.append(strong,document.createTextNode(value));body.append(p);}
+        const toggle=document.createElement("button");toggle.type="button";toggle.className="progress-review-toggle";toggle.setAttribute("aria-expanded","false");
+        const heading=document.createElement("span");heading.className="progress-review-date";heading.textContent=fmt(r.period_start)+" – "+fmt(r.period_end);
+        const action=document.createElement("span");action.className="progress-review-action";action.textContent="Read review +";toggle.append(heading,action);
+        const body=document.createElement("div");body.className="progress-review-body";body.hidden=true;
+        [["Overall progress",r.progress_summary],["Wins and positive changes",r.wins],["Challenges",r.challenges],["Goals for the next four weeks",r.next_goals]].forEach(([label,value])=>{if(value){const p=document.createElement("p"),strong=document.createElement("strong");strong.textContent=label+": ";p.append(strong,document.createTextNode(value));body.append(p);}});
+        if(r.coach_feedback){const box=document.createElement("div");box.className="checkin-coach-feedback";const strong=document.createElement("strong");strong.textContent="A note from your coach";const p=document.createElement("p");p.textContent=r.coach_feedback;box.append(strong,p);body.append(box);}
+        const reflection=byPeriod.get(r.period_start)||{},form=document.createElement("form");form.className="progress-client-reflection";
+        const title=document.createElement("h4");title.textContent="Your four-week reflection";form.append(title);
+        const fields=[["what_went_well","What has gone well over the last four weeks?"],["proud_of","What are you most proud of?"],["challenging","What has felt challenging, or where would you like support?"],["next_focus","What would you like to focus on over the next four weeks?"]],inputs={};
+        fields.forEach(([key,label])=>{const wrap=document.createElement("label");wrap.textContent=label;const area=document.createElement("textarea");area.rows=3;area.maxLength=3000;area.placeholder="Write as much or as little as feels useful…";area.value=reflection[key]||"";wrap.append(area);form.append(wrap);inputs[key]=area;});
+        const save=document.createElement("button");save.type="submit";save.className="admin-save";save.textContent=reflection.updated_at?"Update my reflection":"Save my reflection";
+        const msg=document.createElement("p");msg.className="progress-reflection-message";msg.setAttribute("role","status");form.append(save,msg);
+        form.addEventListener("submit",async event=>{event.preventDefault();save.disabled=true;save.textContent="Saving…";msg.textContent="";
+          try{const payload={user_id:userId,period_start:r.period_start,what_went_well:inputs.what_went_well.value.trim(),proud_of:inputs.proud_of.value.trim(),challenging:inputs.challenging.value.trim(),next_focus:inputs.next_focus.value.trim(),updated_at:new Date().toISOString()};
+            const {error:saveError}=await client.from("client_progress_reflections").upsert(payload,{onConflict:"user_id,period_start"});if(saveError)throw saveError;msg.textContent="Your reflection has been saved. Thank you for taking a moment for yourself.";save.textContent="Update my reflection";
+          }catch(error){console.error("Could not save client reflection:",error);msg.textContent="We couldn't save your reflection just now. Please try again.";save.textContent="Save my reflection";}finally{save.disabled=false;}
         });
-        if(r.coach_feedback){
-          const box=document.createElement("div");box.className="checkin-coach-feedback";
-          const strong=document.createElement("strong");strong.textContent="A note from your coach";
-          const p=document.createElement("p");p.textContent=r.coach_feedback;
-          box.append(strong,p);body.append(box);
-        }
-        if(r.updated_at){
-          const updated=document.createElement("small");
-          updated.textContent="Last updated "+new Date(r.updated_at).toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
-          body.append(updated);
-        }
-        toggle.addEventListener("click",()=>{
-          const isOpen=toggle.getAttribute("aria-expanded")==="true";
-          toggle.setAttribute("aria-expanded",String(!isOpen));
-          body.hidden=isOpen;
-          action.textContent=isOpen?"Read review +":"Close review −";
-        });
-        card.append(toggle,body);
-        list.append(card);
+        body.append(form);
+        if(r.updated_at){const updated=document.createElement("small");updated.textContent="Coach review updated "+new Date(r.updated_at).toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});body.append(updated);}
+        toggle.addEventListener("click",()=>{const open=toggle.getAttribute("aria-expanded")==="true";toggle.setAttribute("aria-expanded",String(!open));body.hidden=open;action.textContent=open?"Read review +":"Close review −";});
+        card.append(toggle,body);list.append(card);
       });
     }
-
-    if(!section.querySelector(".progress-review-refresh")){
-      const refreshButton=document.createElement("button");
-      refreshButton.type="button";
-      refreshButton.className="progress-review-refresh";
-      refreshButton.textContent="Refresh reviews";
-      refreshButton.addEventListener("click",async()=>{
-        refreshButton.disabled=true;
-        refreshButton.textContent="Refreshing…";
-        try{await refreshReviews();refreshButton.textContent="Reviews updated";}
-        catch(error){console.error("Could not refresh progress reviews:",error);refreshButton.textContent="Couldn't refresh — try again";}
-        finally{refreshButton.disabled=false;}
-      });
-      section.insertBefore(refreshButton,list);
-    }
-    try{
-      await refreshReviews();
-    }catch(error){
-      console.error("Could not load progress reviews:",error);
-      list.textContent="We couldn't load your four-week reviews just now. Please refresh or contact your coach if this continues.";
-    }
-    const refreshWhenVisible=()=>{
-      if(document.visibilityState==="visible"){
-        refreshReviews().catch(error=>console.error("Could not refresh progress reviews:",error));
-      }
-    };
-    window.addEventListener("focus",refreshWhenVisible);
-    document.addEventListener("visibilitychange",refreshWhenVisible);
+    if(!section.querySelector(".progress-review-refresh")){const b=document.createElement("button");b.type="button";b.className="progress-review-refresh";b.textContent="Refresh reviews";b.addEventListener("click",async()=>{b.disabled=true;b.textContent="Refreshing…";try{await refreshReviews();b.textContent="Reviews updated";}catch(e){console.error(e);b.textContent="Couldn't refresh — try again";}finally{b.disabled=false;}});section.insertBefore(b,list);}
+    try{await refreshReviews();}catch(error){console.error("Could not load progress reviews:",error);list.textContent="We couldn't load your four-week reviews just now. Please refresh or contact your coach if this continues.";}
+    const refreshWhenVisible=()=>{if(document.visibilityState==="visible")refreshReviews().catch(error=>console.error("Could not refresh progress reviews:",error));};window.addEventListener("focus",refreshWhenVisible);document.addEventListener("visibilitychange",refreshWhenVisible);
   }
 
   async function checkAccess(session) {
