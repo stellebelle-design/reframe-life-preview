@@ -204,9 +204,11 @@
         }
         form.on("confirm", async (event) => {
           try {
+            const confirmationUrl = new URL("order-confirmed.html", window.location.href);
+            confirmationUrl.searchParams.set("programme", button.dataset.product);
             await loadActionsResult.actions.confirm({
               formConfirmEvent: event,
-              returnUrl: new URL("checkout.html", window.location.href).href
+              returnUrl: confirmationUrl.href
             });
           } catch (error) {
             console.error("Stripe payment confirmation error:", error);
