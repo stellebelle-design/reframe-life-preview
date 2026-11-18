@@ -423,7 +423,7 @@
     coaching_12_week:{title:"12-Week Coaching",price:"£309",payment:"one-off payment",intro:"Twelve weeks of personalised coaching and ongoing support to help you build sustainable habits and work towards longer-term goals.",commitment:"This programme lasts twelve weeks and is paid for as a one-off purchase."},
     coaching_6_month:{title:"6-Month Ongoing Coaching",price:"£99",payment:"per month",intro:"Ongoing personalised coaching with consistent support, regular check-ins and guidance as you build habits and work towards your goals.",commitment:"This option is billed at £99 per month with an initial six-month commitment. Please review the applicable terms before purchasing."}
   };
-  dialog.querySelectorAll("[data-coaching-programme]").forEach(function(button){
+  document.querySelectorAll("[data-coaching-programme]").forEach(function(button){
     button.addEventListener("click",function(event){
       event.preventDefault();
       const key=button.getAttribute("data-coaching-programme");
