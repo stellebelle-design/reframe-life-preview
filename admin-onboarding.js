@@ -82,7 +82,7 @@
     if(refresh)refresh.disabled=true;
     try{
       const {data,error}=await client.from("client_checkins")
-        .select("id,user_id,week_start,energy,mood,confidence,consistency,wins,support_needed,created_at")
+        .select("id,user_id,week_start,energy,mood,confidence,consistency,wins,support_needed,coach_feedback,created_at")
         .order("week_start",{ascending:false}).limit(100);
       if(error)throw error;
       if(!data?.length){status.textContent="No weekly check-ins have been submitted yet.";return;}
@@ -109,6 +109,29 @@
         };
         addAnswer("Proud of this week",item.wins);
         addAnswer("Support requested",item.support_needed);
+        const feedbackLabel=document.createElement("label");feedbackLabel.className="checkin-feedback-label";
+        feedbackLabel.textContent="Your feedback for this client";
+        const feedbackInput=document.createElement("textarea");feedbackInput.rows=4;feedbackInput.maxLength=3000;
+        feedbackInput.value=item.coach_feedback||"";
+        feedbackInput.placeholder="Write supportive, personal feedback and guidance…";
+        const save=document.createElement("button");save.type="button";save.className="admin-save";save.textContent="Save feedback";
+        const feedbackStatus=document.createElement("p");feedbackStatus.className="admin-status";feedbackStatus.setAttribute("role","status");
+        save.addEventListener("click",async()=>{
+          save.disabled=true;save.textContent="Saving…";feedbackStatus.textContent="";
+          try{
+            const {error:updateError}=await client.from("client_checkins")
+              .update({coach_feedback:feedbackInput.value.trim(),feedback_updated_at:new Date().toISOString()})
+              .eq("id",item.id);
+            if(updateError)throw updateError;
+            feedbackStatus.textContent="Feedback saved. The client can now see it in their Client Hub.";
+            save.textContent="Update feedback";
+          }catch(error){
+            console.error("Could not save coach feedback:",error);
+            feedbackStatus.textContent="We could not save this feedback. Please try again.";
+            save.textContent="Save feedback";
+          }finally{save.disabled=false;}
+        });
+        body.append(feedbackLabel,feedbackInput,save,feedbackStatus);
         details.append(body);list.append(details);
       });
     }catch(error){
