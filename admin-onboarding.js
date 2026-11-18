@@ -179,6 +179,17 @@
     if(!start.value)start.value=defaultStart(uid);
     const {data:existing,error:reviewError}=await client.from("client_progress_reviews").select("*").eq("user_id",uid).eq("period_start",start.value).maybeSingle();
     if(reviewError)throw reviewError;panel.replaceChildren();
+    const savedForClient=(reviewRows||[]).filter(item=>item.user_id===uid).sort((a,b)=>b.period_start.localeCompare(a.period_start));
+    if(savedForClient.length){
+     const savedList=make("div","progress-review-saved-list");
+     savedList.append(make("h4",null,"Your saved reviews — choose one to edit"));
+     savedForClient.forEach(item=>{
+      const edit=make("button","admin-save","Edit review · "+displayDate(item.period_start));edit.type="button";
+      edit.addEventListener("click",()=>{start.value=item.period_start;showClient().catch(error=>{console.error(error);status.textContent="Couldn’t load this review.";});});
+      savedList.append(edit);
+     });
+     panel.append(savedList);
+    }
     const history=make("div","progress-review-checkins");history.append(make("h4",null,"Recent weekly check-ins"));
     if(!rows.length)history.append(make("p",null,"No check-ins found for this client."));
     rows.forEach(item=>{const line=make("div","progress-review-checkin");line.append(make("strong",null,displayDate(item.week_start)+" · "),document.createTextNode("Energy "+item.energy+"/5 · Mood "+item.mood+"/5 · Confidence "+item.confidence+"/5 · Consistency "+item.consistency+"/5"));if(item.wins)line.append(make("p",null,"Proud of: "+item.wins));if(item.support_needed)line.append(make("p",null,"Support wanted: "+item.support_needed));history.append(line);});
