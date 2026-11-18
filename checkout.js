@@ -179,7 +179,17 @@
         const { data, error } = await supabase.functions.invoke("create-checkout-session", {
           body: { productKey: button.dataset.product }
         });
-        if (error) throw error;
+        if (error) {
+          let detail = error.message || "The checkout request failed.";
+          try {
+            const response = error.context;
+            if (response && typeof response.json === "function") {
+              const body = await response.json();
+              if (body?.error) detail = body.error;
+            }
+          } catch (_) {}
+          throw new Error(detail);
+        }
         if (!data?.client_secret) throw new Error(data?.error || "Stripe did not return a checkout session.");
 
         const stripe = Stripe(window.REFRAME_STRIPE_PUBLISHABLE_KEY);
