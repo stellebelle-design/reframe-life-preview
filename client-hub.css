@@ -158,3 +158,15 @@
  .sidebar-nav{padding:0 12px}
  .sidebar-link{font-size:.7rem;padding:8px 10px}
 }
+
+
+/* Expandable four-week client progress reviews */
+.progress-review-card{padding:0;overflow:hidden}
+.progress-review-toggle{display:flex;width:100%;align-items:center;justify-content:space-between;gap:16px;padding:18px 20px;border:0;background:var(--white);color:var(--ink);text-align:left;cursor:pointer;font:500 1.08rem var(--serif)}
+.progress-review-toggle:hover{background:var(--cream)}
+.progress-review-toggle:focus-visible{outline:2px solid var(--sage);outline-offset:-3px}
+.progress-review-action{flex-shrink:0;color:var(--sage);font:600 .68rem var(--sans);letter-spacing:.06em;text-transform:uppercase}
+.progress-review-body{padding:0 20px 20px;border-top:1px solid var(--line)}
+.progress-review-body[hidden]{display:none}
+.progress-review-body>p{font-size:.8rem;color:var(--ink-soft);margin:12px 0 0;white-space:pre-wrap}
+@media(max-width:600px){.progress-review-toggle{align-items:flex-start;flex-direction:column;gap:7px}}
