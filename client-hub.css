@@ -173,3 +173,11 @@
 .progress-review-body[hidden]{display:none}
 .progress-review-body>p{font-size:.8rem;color:var(--ink-soft);margin:12px 0 0;white-space:pre-wrap}
 @media(max-width:600px){.progress-review-toggle{align-items:flex-start;flex-direction:column;gap:7px}}
+
+/* Client four-week reflection form */
+.progress-client-reflection,.progress-client-reflection-admin{margin-top:1.25rem;padding:1.25rem;border:1px solid var(--line,#e8e2dc);border-radius:14px;background:var(--soft,#faf8f5);}
+.progress-client-reflection h4,.progress-client-reflection-admin h4{margin:0 0 1rem;}
+.progress-client-reflection label{display:block;margin:0 0 1rem;font-weight:600;}
+.progress-client-reflection textarea{display:block;width:100%;margin-top:.45rem;padding:.8rem;border:1px solid var(--line,#ddd);border-radius:9px;font:inherit;resize:vertical;background:#fff;}
+.progress-reflection-message{margin:.75rem 0 0;}
+.progress-client-reflection-admin p{margin:.6rem 0;}
