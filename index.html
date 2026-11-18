@@ -111,22 +111,8 @@
       <h3>Personalised Training Programme</h3>
       <p class="service-tag">A plan made around you</p>
       <p>A one-off personalised training programme shaped around your goals, experience and circumstances.</p>
-      <div class="programme-details">
-        <p><strong>What's included</strong></p>
-        <ul>
-          <li>A training plan tailored to your goals, experience, lifestyle and available equipment.</li>
-          <li>Exercises, sets, reps and suggested rest periods.</li>
-          <li>Guidance on structuring your training week and progressing over time.</li>
-          <li>Suitable exercise alternatives where appropriate.</li>
-          <li>Your completed programme shared through your Client Hub.</li>
-          <li>The opportunity to ask questions about your programme if you need anything clarified.</li>
-        </ul>
-        <p><strong>How it works</strong></p>
-        <p>Purchase your programme, complete the onboarding questionnaire, and I'll use your answers to create your personalised plan.</p>
-        <p><strong>Please note:</strong> This is a one-off training plan, not ongoing coaching. Weekly check-ins, regular programme adjustments and ongoing one-to-one support are not included.</p>
-      </div>
       <p class="programme-price">£30 <span>one-off</span></p>
-      <a class="btn btn-primary" href="checkout.html?product=personalised_programme">Buy this programme</a>
+      <a class="btn btn-primary" href="#personalised-programme-details" id="open-personalised-details">Find out more</a>
     </article>
 
     <article class="service-card programme-card">
@@ -202,6 +188,46 @@
     </div>
   </div>
 </section>
+
+
+<dialog id="personalised-programme-details" class="programme-dialog" aria-labelledby="personalised-dialog-title">
+  <div class="programme-dialog-inner">
+    <button type="button" class="programme-dialog-close" id="close-personalised-details" aria-label="Close programme details">&times;</button>
+    <p class="eyebrow">YOUR REFRAME LIFE PROGRAMME</p>
+    <h2 id="personalised-dialog-title">Personalised Training Programme</h2>
+    <p class="programme-dialog-price">£30 <span>one-off payment</span></p>
+    <p>A training programme created around your individual goals, experience, lifestyle and available equipment.</p>
+    <h3>What's included</h3>
+    <ul>
+      <li>A training plan tailored to you.</li>
+      <li>Exercises, sets, reps and suggested rest periods.</li>
+      <li>Guidance on structuring your training week and progressing over time.</li>
+      <li>Suitable exercise alternatives where appropriate.</li>
+      <li>Your completed programme shared through your Client Hub.</li>
+      <li>The opportunity to ask questions about your programme if you need anything clarified.</li>
+    </ul>
+    <h3>How it works</h3>
+    <p>After purchasing, you'll complete the onboarding questionnaire. I'll use your answers to create your personalised plan and share it with you through your Client Hub.</p>
+    <h3>A little more about the support</h3>
+    <p>You can get in touch with questions about your programme, such as asking for clarification about an exercise or how to follow the plan.</p>
+    <p>This is a one-off training plan rather than ongoing coaching. Weekly check-ins, regular programme adjustments and ongoing one-to-one coaching support are not included.</p>
+    <a class="btn btn-primary programme-dialog-continue" href="checkout.html?product=personalised_programme">Continue to secure checkout</a>
+  </div>
+</dialog>
+<style>
+.programme-dialog{width:min(92vw,650px);max-height:85vh;overflow:auto;border:0;border-radius:18px;padding:0;background:#fffaf6;color:#403832;box-shadow:0 20px 70px rgba(0,0,0,.25)}
+.programme-dialog::backdrop{background:rgba(40,34,30,.62);backdrop-filter:blur(3px)}
+.programme-dialog-inner{position:relative;padding:clamp(24px,5vw,42px);font-family:Jost,sans-serif;line-height:1.65}
+.programme-dialog-inner h2{font:500 clamp(30px,5vw,40px)/1.1 'Cormorant Garamond',serif;margin:8px 40px 8px 0}
+.programme-dialog-inner h3{font:500 23px/1.2 'Cormorant Garamond',serif;margin:22px 0 8px}
+.programme-dialog-inner ul{padding-left:22px}
+.programme-dialog-inner li{margin:6px 0}
+.programme-dialog-price{font-size:22px;font-weight:600;margin:8px 0 18px}
+.programme-dialog-price span{font-size:14px;font-weight:400;color:#756b63}
+.programme-dialog-close{position:absolute;right:18px;top:14px;border:0;background:transparent;color:#51473f;font-size:30px;line-height:1;cursor:pointer;padding:6px}
+.programme-dialog-continue{display:inline-block;margin-top:18px;text-align:center}
+@media(max-width:520px){.programme-dialog{width:calc(100vw - 24px);max-height:88vh}.programme-dialog-inner{padding:26px 22px}.programme-dialog-continue{width:100%;box-sizing:border-box}}
+</style>
 
 <!-- THE REFRAME EXPERIENCE -->
 <section class="experience" id="experience">
@@ -342,5 +368,24 @@
   });
 })();
 </script>
+
+<script>
+(function(){
+  const dialog=document.getElementById("personalised-programme-details");
+  const openButton=document.getElementById("open-personalised-details");
+  const closeButton=document.getElementById("close-personalised-details");
+  if(!dialog||!openButton||!closeButton)return;
+  openButton.addEventListener("click",function(event){
+    event.preventDefault();
+    if(typeof dialog.showModal==="function")dialog.showModal();
+    else dialog.setAttribute("open","");
+  });
+  closeButton.addEventListener("click",function(){dialog.close();});
+  dialog.addEventListener("click",function(event){
+    if(event.target===dialog)dialog.close();
+  });
+})();
+</script>
+
 </body>
 </html>
