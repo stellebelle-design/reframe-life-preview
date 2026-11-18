@@ -220,9 +220,41 @@
       if(progressSection)progressSection.hidden=false;
       const progressNav=document.querySelector("#sidebarProgress");
       if(progressNav)progressNav.hidden=false;
-      data.forEach(r=>{const card=document.createElement("article");card.className="checkin-history-card";const h=document.createElement("h4");const fmt=d=>new Date(d+"T12:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});h.textContent=fmt(r.period_start)+" – "+fmt(r.period_end);card.append(h);
-        [["Overall progress",r.progress_summary],["Wins and positive changes",r.wins],["Challenges",r.challenges],["Goals for the next four weeks",r.next_goals]].forEach(([label,value])=>{if(value){const p=document.createElement("p"),b=document.createElement("strong");b.textContent=label+": ";p.append(b,document.createTextNode(value));card.append(p);}});
-        if(r.coach_feedback){const box=document.createElement("div");box.className="checkin-coach-feedback";const b=document.createElement("strong");b.textContent="A note from your coach";const p=document.createElement("p");p.textContent=r.coach_feedback;box.append(b,p);card.append(box);}list.append(card);
+      data.forEach(r=>{
+        const card=document.createElement("article");
+        card.className="checkin-history-card progress-review-card";
+        const fmt=d=>new Date(d+"T12:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
+        const toggle=document.createElement("button");
+        toggle.type="button";
+        toggle.className="progress-review-toggle";
+        toggle.setAttribute("aria-expanded","false");
+        const heading=document.createElement("span");
+        heading.className="progress-review-date";
+        heading.textContent=fmt(r.period_start)+" – "+fmt(r.period_end);
+        const action=document.createElement("span");
+        action.className="progress-review-action";
+        action.textContent="Read review +";
+        toggle.append(heading,action);
+        const body=document.createElement("div");
+        body.className="progress-review-body";
+        body.hidden=true;
+        [["Overall progress",r.progress_summary],["Wins and positive changes",r.wins],["Challenges",r.challenges],["Goals for the next four weeks",r.next_goals]].forEach(([label,value])=>{
+          if(value){const p=document.createElement("p"),b=document.createElement("strong");b.textContent=label+": ";p.append(b,document.createTextNode(value));body.append(p);}
+        });
+        if(r.coach_feedback){
+          const box=document.createElement("div");box.className="checkin-coach-feedback";
+          const b=document.createElement("strong");b.textContent="A note from your coach";
+          const p=document.createElement("p");p.textContent=r.coach_feedback;
+          box.append(b,p);body.append(box);
+        }
+        toggle.addEventListener("click",()=>{
+          const isOpen=toggle.getAttribute("aria-expanded")==="true";
+          toggle.setAttribute("aria-expanded",String(!isOpen));
+          body.hidden=isOpen;
+          action.textContent=isOpen?"Read review +":"Close review −";
+        });
+        card.append(toggle,body);
+        list.append(card);
       });
     } catch(error){
       console.error("Could not load progress reviews:",error);
