@@ -102,7 +102,17 @@
         const purchased = new Date(item.created_at).getTime();
         return Number.isFinite(purchased) && now < purchased + days * 86400000;
       });
-      if (!eligible) return;
+      if (!eligible) {
+        // Keep past progress reviews accessible after coaching ends, but do not
+        // leave the weekly check-in form available to clients without active access.
+        form.hidden = true;
+        const historyPanel = history.closest(".checkin-history");
+        if (historyPanel) historyPanel.hidden = true;
+        return;
+      }
+      form.hidden = false;
+      const historyPanel = history.closest(".checkin-history");
+      if (historyPanel) historyPanel.hidden = false;
       section.hidden = false;
       const today = new Date();
       const monday = new Date(today);
@@ -190,13 +200,29 @@
     if(!section||!list)return;
     try {
       const {data,error}=await client.from("client_progress_reviews").select("period_start,period_end,progress_summary,wins,challenges,next_goals,coach_feedback").eq("user_id",userId).order("period_start",{ascending:false}).limit(12);
-      if(error)throw error; section.hidden=false; list.replaceChildren();
-      if(!data?.length){list.textContent="Your four-week reviews will appear here as they are completed with your coach.";return;}
+      if(error)throw error;
+      list.replaceChildren();
+      if(!data?.length){
+        section.hidden = document.querySelector("#clientCheckinForm")?.hidden ?? true;
+        if (!section.hidden) list.textContent="Your four-week reviews will appear here as they are completed with your coach.";
+        return;
+      }
+      // A saved review remains part of the client's progress history even when
+      // their time-limited coaching access has ended.
+      section.hidden=false;
+      const progressSection=document.querySelector("#my-progress");
+      if(progressSection)progressSection.hidden=false;
+      const progressNav=document.querySelector("#sidebarProgress");
+      if(progressNav)progressNav.hidden=false;
       data.forEach(r=>{const card=document.createElement("article");card.className="checkin-history-card";const h=document.createElement("h4");const fmt=d=>new Date(d+"T12:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});h.textContent=fmt(r.period_start)+" – "+fmt(r.period_end);card.append(h);
         [["Overall progress",r.progress_summary],["Wins and positive changes",r.wins],["Challenges",r.challenges],["Goals for the next four weeks",r.next_goals]].forEach(([label,value])=>{if(value){const p=document.createElement("p"),b=document.createElement("strong");b.textContent=label+": ";p.append(b,document.createTextNode(value));card.append(p);}});
         if(r.coach_feedback){const box=document.createElement("div");box.className="checkin-coach-feedback";const b=document.createElement("strong");b.textContent="A note from your coach";const p=document.createElement("p");p.textContent=r.coach_feedback;box.append(b,p);card.append(box);}list.append(card);
       });
-    } catch(error){console.error("Could not load progress reviews:",error);section.hidden=false;list.textContent="Your progress reviews couldn’t be loaded just now. Please refresh and try again.";}
+    } catch(error){
+      console.error("Could not load progress reviews:",error);
+      if (!(document.querySelector("#clientCheckinForm")?.hidden ?? true)) section.hidden=false;
+      list.textContent="Your progress reviews couldn’t be loaded just now. Please refresh and try again.";
+    }
   }
 
   async function checkAccess(session) {
