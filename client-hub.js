@@ -846,6 +846,27 @@ dialog?.addEventListener("click",event=>{if(event.target===dialog) dialog.close(
         const heading=document.createElement("strong");heading.textContent=item.responses?.name||"Client";
         const packageName=document.createElement("p");packageName.textContent=labels[item.product_key]||"Reframe Life programme";
         const submitted=document.createElement("small");submitted.textContent="Questionnaire submitted "+new Date(item.submitted_at).toLocaleDateString("en-GB");
+        const {data:schedule,error:scheduleError}=await client.from("client_programme_schedules").select("programme_start_date").eq("user_id",item.user_id).maybeSingle();
+        if(scheduleError)throw scheduleError;
+        if(item.product_key!=="personalised_programme"){
+          const startWrap=document.createElement("label");startWrap.className="submission-answer";
+          const startTitle=document.createElement("strong");startTitle.textContent="Programme start date";
+          const startInput=document.createElement("input");startInput.type="date";startInput.value=schedule?.programme_start_date||"";
+          const saveStart=document.createElement("button");saveStart.type="button";saveStart.className="admin-save";saveStart.textContent=schedule?.programme_start_date?"Update start date":"Save start date";
+          const startMessage=document.createElement("small");startMessage.setAttribute("role","status");
+          saveStart.addEventListener("click",async()=>{
+            if(!startInput.value){startMessage.textContent="Please choose the day the client actually begins.";return;}
+            saveStart.disabled=true;startMessage.textContent="Saving…";
+            try{
+              const {error:saveError}=await client.from("client_programme_schedules").upsert({user_id:item.user_id,programme_start_date:startInput.value,updated_at:new Date().toISOString()},{onConflict:"user_id"});
+              if(saveError)throw saveError;
+              startMessage.textContent="Start date saved. Weekly and four-week timings will use this date.";
+              saveStart.textContent="Update start date";
+            }catch(error){console.error("Could not save programme start date:",error);startMessage.textContent="We couldn't save the date. Please try again.";}
+            finally{saveStart.disabled=false;}
+          });
+          startWrap.append(startTitle,startInput,saveStart,startMessage);details.append(startWrap);
+        }
         const control=document.createElement("label");control.className="admin-publish";
         const checkbox=document.createElement("input");checkbox.type="checkbox";checkbox.checked=!!ready?.is_ready;
         const label=document.createElement("span");label.textContent="Programme prepared and shared with client";
