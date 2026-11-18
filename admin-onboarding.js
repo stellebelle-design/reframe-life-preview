@@ -156,16 +156,27 @@
   try{
    const {data,error}=await client.from("client_checkins").select("user_id,week_start,energy,mood,confidence,consistency,wins,support_needed").order("week_start",{ascending:false}).limit(500);
    if(error)throw error;checkins=data||[];
-   const ids=[...new Set(checkins.map(x=>x.user_id))];
-   if(!ids.length){status.textContent="No client check-ins yet. Clients will appear here after submitting a weekly check-in.";return;}
-   status.textContent=ids.length+" client"+(ids.length===1?"":"s")+" with check-ins."; 
+   const {data:accessRows,error:accessError}=await client.from("client_access").select("user_id,access_status").eq("access_status","active");
+   if(accessError)throw accessError;
+   const {data:reviewRows,error:reviewsError}=await client.from("client_progress_reviews").select("user_id,period_start").order("period_start",{ascending:false});
+   if(reviewsError)throw reviewsError;
+   const ids=[...new Set([...checkins.map(x=>x.user_id),...(accessRows||[]).map(x=>x.user_id),...(reviewRows||[]).map(x=>x.user_id)].filter(Boolean))];
+   if(!ids.length){status.textContent="No client accounts found yet.";return;}
+   status.textContent=ids.length+" client account"+(ids.length===1?"":"s")+" available.";
    const controls=make("div","progress-review-controls");const clientLabel=make("label",null,"Choose client");const select=make("select");
    ids.forEach(id=>{const option=make("option",null,"Client account · "+id);option.value=id;select.append(option);});clientLabel.append(select);
    const periodLabel=make("label",null,"Review period starts");const start=make("input");start.type="date";periodLabel.append(start);controls.append(clientLabel,periodLabel);root.append(controls);
    const panel=make("div");root.append(panel);
+   function defaultStart(uid){
+    const saved=(reviewRows||[]).filter(x=>x.user_id===uid).map(x=>x.period_start).sort().reverse();
+    if(saved.length)return saved[0];
+    const rows=checkins.filter(x=>x.user_id===uid).map(x=>x.week_start).sort().reverse();
+    return rows[rows.length-1]||dateOnly(new Date());
+   }
+   start.value=defaultStart(select.value);
    async function showClient(){
     const uid=select.value,rows=checkins.filter(x=>x.user_id===uid).slice(0,4);
-    if(!start.value)start.value=rows.length?rows[rows.length-1].week_start:dateOnly(new Date());
+    if(!start.value)start.value=defaultStart(uid);
     const {data:existing,error:reviewError}=await client.from("client_progress_reviews").select("*").eq("user_id",uid).eq("period_start",start.value).maybeSingle();
     if(reviewError)throw reviewError;panel.replaceChildren();
     const history=make("div","progress-review-checkins");history.append(make("h4",null,"Recent weekly check-ins"));
@@ -182,7 +193,7 @@
      }catch(error){console.error("Could not save progress review:",error);msg.textContent="We couldn’t save the review. Please try again.";save.textContent="Save four-week review";}finally{save.disabled=false;}
     });
    }
-   select.addEventListener("change",()=>{const rows=checkins.filter(x=>x.user_id===select.value).slice(0,4);start.value=rows.length?rows[rows.length-1].week_start:dateOnly(new Date());showClient().catch(error=>{console.error(error);status.textContent="Couldn’t load this client’s review.";});});
+   select.addEventListener("change",()=>{start.value=defaultStart(select.value);showClient().catch(error=>{console.error(error);status.textContent="Couldn’t load this client’s review.";});});
    start.addEventListener("change",()=>showClient().catch(error=>{console.error(error);status.textContent="Couldn’t load this review period."; }));
    await showClient();
   }catch(error){console.error("Could not load progress review admin:",error);status.textContent="We couldn’t load progress reviews. Please check admin access and try again.";}
