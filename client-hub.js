@@ -185,6 +185,20 @@
     }
   }
 
+  async function loadClientProgressReviews(userId) {
+    const section=document.querySelector("#clientProgressReviews"), list=document.querySelector("#clientProgressReviewList");
+    if(!section||!list)return;
+    try {
+      const {data,error}=await client.from("client_progress_reviews").select("period_start,period_end,progress_summary,wins,challenges,next_goals,coach_feedback").eq("user_id",userId).order("period_start",{ascending:false}).limit(12);
+      if(error)throw error; section.hidden=false; list.replaceChildren();
+      if(!data?.length){list.textContent="Your four-week reviews will appear here as they are completed with your coach.";return;}
+      data.forEach(r=>{const card=document.createElement("article");card.className="checkin-history-card";const h=document.createElement("h4");const fmt=d=>new Date(d+"T12:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});h.textContent=fmt(r.period_start)+" – "+fmt(r.period_end);card.append(h);
+        [["Overall progress",r.progress_summary],["Wins and positive changes",r.wins],["Challenges",r.challenges],["Goals for the next four weeks",r.next_goals]].forEach(([label,value])=>{if(value){const p=document.createElement("p"),b=document.createElement("strong");b.textContent=label+": ";p.append(b,document.createTextNode(value));card.append(p);}});
+        if(r.coach_feedback){const box=document.createElement("div");box.className="checkin-coach-feedback";const b=document.createElement("strong");b.textContent="A note from your coach";const p=document.createElement("p");p.textContent=r.coach_feedback;box.append(b,p);card.append(box);}list.append(card);
+      });
+    } catch(error){console.error("Could not load progress reviews:",error);section.hidden=false;list.textContent="Your progress reviews couldn’t be loaded just now. Please refresh and try again.";}
+  }
+
   async function checkAccess(session) {
     if (!session?.user) {
       hubShell.hidden = true;
@@ -209,6 +223,7 @@
     if (adminPanel) adminPanel.hidden = !adminRecord;
     await loadClientDashboard(session.user.id);
     await loadClientCheckins(session.user.id);
+    await loadClientProgressReviews(session.user.id);
     await loadPublishedRecipes({ isAdmin: !!adminRecord, userId: session.user.id });
     if (adminRecord && window.loadAdminRecipes) await window.loadAdminRecipes();
     if (adminRecord && window.loadAdminOnboarding) await window.loadAdminOnboarding();
