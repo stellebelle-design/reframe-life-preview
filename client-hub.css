@@ -105,6 +105,7 @@
 .checkin-history{margin-top:30px}
 .checkin-refresh{display:inline-block;margin:12px 0 4px;padding:8px 13px;border:1px solid var(--line);background:transparent;color:var(--ink-soft);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
 .checkin-refresh:disabled{opacity:.55;cursor:wait}
+.progress-review-refresh{display:inline-block;margin:12px 0 4px;padding:8px 13px;border:1px solid var(--line);background:transparent;color:var(--ink-soft);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}.progress-review-refresh:disabled{opacity:.55;cursor:wait}
 .checkin-history-card{margin-top:10px;padding:18px 20px;background:var(--white);border:1px solid var(--line)}
 .checkin-history-card h4{font:500 1.2rem var(--serif);margin:0 0 5px}
 .checkin-history-card p{font-size:.8rem;color:var(--ink-soft);margin:7px 0 0;white-space:pre-wrap}
