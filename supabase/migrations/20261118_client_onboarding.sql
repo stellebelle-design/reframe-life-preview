@@ -69,15 +69,28 @@ create table if not exists public.client_onboarding (
     )
   ),
   responses jsonb not null default '{}'::jsonb,
+  health_responses jsonb not null default '{}'::jsonb,
   health_information_consent boolean not null default false,
   health_information_consented_at timestamptz,
   submitted_at timestamptz not null default now(),
   created_at timestamptz not null default now(),
-  constraint client_onboarding_consent_timestamp_check
+  constraint client_onboarding_consent_check
     check (
-      (health_information_consent = false and health_information_consented_at is null)
+      (
+        health_information_consent = false
+        and health_information_consented_at is null
+        and health_responses = '{}'::jsonb
+      )
       or
-      (health_information_consent = true and health_information_consented_at is not null)
+      (
+        health_information_consent = true
+        and health_information_consented_at is not null
+      )
+    ),
+  constraint client_onboarding_responses_object_check
+    check (
+      jsonb_typeof(responses) = 'object'
+      and jsonb_typeof(health_responses) = 'object'
     )
 );
 
@@ -113,6 +126,13 @@ create policy "Clients can submit own onboarding"
   to authenticated
   with check (
     auth.uid() = user_id
+    and (
+      health_responses = '{}'::jsonb
+      or (
+        health_information_consent = true
+        and health_information_consented_at is not null
+      )
+    )
     and exists (
       select 1
       from public.client_purchases cp
@@ -131,6 +151,13 @@ create policy "Clients can update own onboarding"
   using (auth.uid() = user_id)
   with check (
     auth.uid() = user_id
+    and (
+      health_responses = '{}'::jsonb
+      or (
+        health_information_consent = true
+        and health_information_consented_at is not null
+      )
+    )
     and exists (
       select 1
       from public.client_purchases cp
