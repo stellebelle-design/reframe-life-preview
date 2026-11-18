@@ -49,3 +49,26 @@
 .admin-row-actions{display:flex;gap:7px;flex-wrap:wrap}
 .admin-row-button{padding:7px 10px;font-size:.6rem}
 @media(max-width:600px){.admin-panel{padding:26px 18px}.admin-form{padding:18px}.admin-form-grid{grid-template-columns:1fr}.admin-wide{grid-column:auto}.admin-heading{display:block}.admin-tag{display:inline-block;margin-top:14px}.admin-recipe-row{align-items:flex-start;flex-direction:column}}
+
+
+/* Private client questionnaire viewer */
+.onboarding-admin-wrap{border-top:1px solid var(--line);padding-top:24px}
+.admin-submissions-heading{display:flex;align-items:center;justify-content:space-between;gap:18px}
+.admin-submissions-heading h3{margin:0}
+.admin-submissions-heading .section-intro{margin:5px 0 0;font-size:.8rem}
+.admin-status{font-size:.78rem;color:var(--ink-soft)}
+.onboarding-admin-list{display:grid;gap:12px}
+.onboarding-submission{background:var(--white);border:1px solid var(--line);padding:18px 20px}
+.onboarding-submission summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:15px}
+.onboarding-submission summary::-webkit-details-marker{display:none}
+.onboarding-submission summary strong{display:block;font:500 1.25rem var(--serif)}
+.onboarding-submission summary small{display:block;color:var(--ink-soft);font-size:.7rem}
+.submission-details{border-top:1px solid var(--line);margin-top:15px;padding-top:14px}
+.submission-answer{display:grid;grid-template-columns:minmax(150px, .8fr) 1.5fr;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:.82rem}
+.submission-answer strong{font-weight:500;color:var(--ink-soft)}
+.submission-answer span{white-space:pre-wrap;overflow-wrap:anywhere}
+.submission-health{margin-top:16px;padding:15px;background:var(--cream);border-left:3px solid var(--sage)}
+.submission-health h4{margin:0 0 8px;font:500 1.15rem var(--serif)}
+.submission-health p{white-space:pre-wrap;font-size:.82rem;margin:0}
+.submission-meta{font-size:.68rem;color:var(--ink-soft);margin-top:12px}
+@media(max-width:600px){.admin-submissions-heading{align-items:flex-start;flex-direction:column}.submission-answer{grid-template-columns:1fr;gap:3px}}
