@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Jost:wght@300;400;500;600&family=Petit+Formal+Script&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="client-hub.css?v=20261118-dashboard1">
+  <link rel="stylesheet" href="client-hub.css?v=20261118-checkin1">
 </head>
 <body>
   <section class="login-screen" id="loginScreen">
@@ -64,6 +64,42 @@
             <a class="dashboard-link" href="onboarding.html">Open your questionnaire <span aria-hidden="true">↗</span></a>
           </article>
         </div>
+      </section>
+
+      <section class="section checkin-section" id="my-progress" aria-labelledby="checkinTitle" hidden>
+        <div class="section-heading">
+          <div><p class="eyebrow">PROGRESS THAT GOES BEYOND THE SCALES</p><h2 id="checkinTitle">Your weekly <em>check-in.</em></h2>
+          <p class="section-intro">A little pause to notice how you're feeling, what's going well and where you'd like support. There are no perfect answers.</p></div>
+          <span class="recipe-count">JUST FOR YOU</span>
+        </div>
+        <form id="clientCheckinForm" class="checkin-form">
+          <div class="checkin-form-heading"><h3>How has your week been?</h3><p>Your answers are private to your Reframe Life coaching space.</p></div>
+          <label class="checkin-field">Week commencing
+            <input type="date" id="checkinWeek" required>
+          </label>
+          <div class="checkin-ratings">
+            <label class="checkin-field">How has your energy been?
+              <select id="checkinEnergy" required><option value="">Choose a rating</option><option value="1">1 – Very low</option><option value="2">2 – Low</option><option value="3">3 – In the middle</option><option value="4">4 – Good</option><option value="5">5 – Great</option></select>
+            </label>
+            <label class="checkin-field">How has your mood been?
+              <select id="checkinMood" required><option value="">Choose a rating</option><option value="1">1 – Very low</option><option value="2">2 – Low</option><option value="3">3 – In the middle</option><option value="4">4 – Good</option><option value="5">5 – Great</option></select>
+            </label>
+            <label class="checkin-field">How confident have you felt?
+              <select id="checkinConfidence" required><option value="">Choose a rating</option><option value="1">1 – Not confident</option><option value="2">2 – A little</option><option value="3">3 – Fairly</option><option value="4">4 – Confident</option><option value="5">5 – Very confident</option></select>
+            </label>
+            <label class="checkin-field">How consistent have your habits felt?
+              <select id="checkinConsistency" required><option value="">Choose a rating</option><option value="1">1 – Not at all</option><option value="2">2 – A little</option><option value="3">3 – Some of the time</option><option value="4">4 – Most of the time</option><option value="5">5 – Consistent</option></select>
+            </label>
+          </div>
+          <label class="checkin-field">What are you proud of this week? <span>Think about non-scale victories too.</span>
+            <textarea id="checkinWins" rows="3" maxlength="2000" placeholder="A small win, a positive change, something you managed…"></textarea>
+          </label>
+          <label class="checkin-field">What would you like support with?
+            <textarea id="checkinSupport" rows="3" maxlength="2000" placeholder="Anything you'd like us to talk through or focus on together…"></textarea>
+          </label>
+          <div class="checkin-actions"><button type="submit" class="admin-save" id="checkinSubmit">Save my check-in</button><p id="checkinMessage" role="status" aria-live="polite"></p></div>
+        </form>
+        <div class="checkin-history"><h3>Your recent check-ins</h3><div id="checkinHistory"><p>Loading your check-ins…</p></div></div>
       </section>
 
       <section class="quick-links" aria-label="Resource sections">
@@ -170,7 +206,7 @@
   </dialog>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
-  <script src="client-hub.js?v=20261118-dashboard1"></script>
+  <script src="client-hub.js?v=20261118-checkin1"></script>
   <script src="admin-onboarding.js?v=20261118-1"></script>
 </body>
 </html>
