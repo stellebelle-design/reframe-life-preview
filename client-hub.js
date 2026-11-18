@@ -312,7 +312,7 @@
   }
 
   // Always prevent the browser's default form navigation, even if auth is offline.
-  loginSubmit?.addEventListener("click", async event => {
+  loginForm?.addEventListener("submit", async event => {
     event.preventDefault();
     if (loginForm && !loginForm.reportValidity()) return;
     if (!client) {
