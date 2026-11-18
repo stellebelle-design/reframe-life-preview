@@ -81,6 +81,102 @@
     }
   }
 
+  async function loadClientCheckins(userId) {
+    const section = document.querySelector("#my-progress");
+    const form = document.querySelector("#clientCheckinForm");
+    const message = document.querySelector("#checkinMessage");
+    const history = document.querySelector("#checkinHistory");
+    if (!section || !form || !history) return;
+    try {
+      const { data: purchases, error: purchaseError } = await client
+        .from("client_purchases")
+        .select("product_key,payment_status,created_at")
+        .eq("user_id", userId);
+      if (purchaseError) throw purchaseError;
+      const now = Date.now();
+      const durations = { coaching_4_week: 28, coaching_8_week: 56, coaching_12_week: 84 };
+      const eligible = (purchases || []).some(item => {
+        if (item.product_key === "coaching_6_month") return item.payment_status === "active";
+        const days = durations[item.product_key];
+        if (!days || item.payment_status !== "paid" || !item.created_at) return false;
+        const purchased = new Date(item.created_at).getTime();
+        return Number.isFinite(purchased) && now < purchased + days * 86400000;
+      });
+      if (!eligible) return;
+      section.hidden = false;
+      const today = new Date();
+      const monday = new Date(today);
+      monday.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+      const localDate = d => [d.getFullYear(), String(d.getMonth()+1).padStart(2,"0"), String(d.getDate()).padStart(2,"0")].join("-");
+      const weekInput = document.querySelector("#checkinWeek");
+      if (weekInput) weekInput.value = localDate(monday);
+      async function refreshHistory() {
+        const { data, error } = await client.from("client_checkins")
+          .select("week_start,energy,mood,confidence,consistency,wins,support_needed,created_at")
+          .eq("user_id", userId).order("week_start", { ascending: false }).limit(8);
+        if (error) throw error;
+        history.replaceChildren();
+        if (!data?.length) {
+          const p=document.createElement("p"); p.textContent="Your check-ins will appear here as you complete them."; history.append(p); return;
+        }
+        data.forEach(item => {
+          const article=document.createElement("article"); article.className="checkin-history-card";
+          const heading=document.createElement("h4");
+          const date=new Date(item.week_start+"T12:00:00");
+          heading.textContent="Week commencing "+date.toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
+          const ratings=document.createElement("p"); ratings.className="checkin-history-ratings";
+          ratings.textContent="Energy "+item.energy+"/5 · Mood "+item.mood+"/5 · Confidence "+item.confidence+"/5 · Consistency "+item.consistency+"/5";
+          article.append(heading,ratings);
+          if(item.wins){const wins=document.createElement("p");wins.textContent="Proud of: "+item.wins;article.append(wins);}
+          if(item.support_needed){const support=document.createElement("p");support.textContent="Support wanted: "+item.support_needed;article.append(support);}
+          history.append(article);
+        });
+        const latest=data[0];
+        if (latest && weekInput.value === latest.week_start) {
+          ["Energy","Mood","Confidence","Consistency"].forEach(key => {
+            const el=document.querySelector("#checkin"+key);
+            if(el) el.value=String(latest[key.toLowerCase()]);
+          });
+          document.querySelector("#checkinWins").value=latest.wins || "";
+          document.querySelector("#checkinSupport").value=latest.support_needed || "";
+        }
+      }
+      await refreshHistory();
+      form.addEventListener("submit", async event => {
+        event.preventDefault();
+        const submit=document.querySelector("#checkinSubmit");
+        if(submit){submit.disabled=true;submit.textContent="Saving…";}
+        if(message) message.textContent="";
+        try {
+          const payload={
+            user_id:userId,
+            week_start:weekInput.value,
+            energy:Number(document.querySelector("#checkinEnergy").value),
+            mood:Number(document.querySelector("#checkinMood").value),
+            confidence:Number(document.querySelector("#checkinConfidence").value),
+            consistency:Number(document.querySelector("#checkinConsistency").value),
+            wins:document.querySelector("#checkinWins").value.trim(),
+            support_needed:document.querySelector("#checkinSupport").value.trim()
+          };
+          const {error}=await client.from("client_checkins").upsert(payload,{onConflict:"user_id,week_start"});
+          if(error) throw error;
+          if(message) message.textContent="Your check-in has been saved. Thank you for taking a moment for yourself.";
+          await refreshHistory();
+        } catch(error) {
+          console.error("Could not save client check-in:",error);
+          if(message) message.textContent="We couldn't save your check-in just now. Please try again.";
+        } finally {
+          if(submit){submit.disabled=false;submit.textContent="Save my check-in";}
+        }
+      });
+    } catch(error) {
+      console.error("Could not load client check-ins:",error);
+      section.hidden=false;
+      history.textContent="We couldn't load your check-ins just now. Please refresh and try again.";
+      if(message) message.textContent="Check-in storage needs to be set up before you can save your answers.";
+    }
+  }
+
   async function checkAccess(session) {
     if (!session?.user) {
       hubShell.hidden = true;
@@ -104,6 +200,7 @@
     const { data: adminRecord } = await client.from("admin_users").select("user_id").eq("user_id", session.user.id).maybeSingle();
     if (adminPanel) adminPanel.hidden = !adminRecord;
     await loadClientDashboard(session.user.id);
+    await loadClientCheckins(session.user.id);
     await loadPublishedRecipes({ isAdmin: !!adminRecord, userId: session.user.id });
     if (adminRecord && window.loadAdminRecipes) await window.loadAdminRecipes();
     if (adminRecord && window.loadAdminOnboarding) await window.loadAdminOnboarding();
