@@ -221,6 +221,8 @@
     hubShell.hidden = false;
     const { data: adminRecord } = await client.from("admin_users").select("user_id").eq("user_id", session.user.id).maybeSingle();
     if (adminPanel) adminPanel.hidden = !adminRecord;
+    const adminNav=document.querySelector("#sidebarAdmin"); if(adminNav)adminNav.hidden=!adminRecord;
+    const progressNav=document.querySelector("#sidebarProgress"); if(progressNav)progressNav.hidden=document.querySelector("#my-progress")?.hidden ?? true;
     await loadClientDashboard(session.user.id);
     await loadClientCheckins(session.user.id);
     await loadClientProgressReviews(session.user.id);
@@ -585,4 +587,20 @@ dialog?.addEventListener("click",event=>{if(event.target===dialog) dialog.close(
     finally { byId("adminSave").disabled=false; }
   });
   window.loadAdminRecipes=loadAdminRecipes;
+})();
+
+/* Sidebar navigation active state and smooth section navigation. */
+(function(){
+ const links=[...document.querySelectorAll(".sidebar-link[data-section]")];
+ links.forEach(link=>link.addEventListener("click",()=>{
+  links.forEach(item=>item.classList.toggle("active",item===link));
+ }));
+ const sections=links.map(link=>({link,section:document.getElementById(link.dataset.section)})).filter(x=>x.section);
+ if("IntersectionObserver" in window){
+  const observer=new IntersectionObserver(entries=>{
+   const visible=entries.filter(entry=>entry.isIntersecting).sort((a,b)=>b.intersectionRatio-a.intersectionRatio)[0];
+   if(visible)links.forEach(link=>link.classList.toggle("active",link.dataset.section===visible.target.id));
+  },{rootMargin:"-18% 0px -65% 0px",threshold:[0,.1,.3]});
+  sections.forEach(item=>observer.observe(item.section));
+ }
 })();
