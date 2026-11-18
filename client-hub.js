@@ -45,6 +45,7 @@
     if (adminPanel) adminPanel.hidden = !adminRecord;
     await loadPublishedRecipes();
     if (adminRecord && window.loadAdminRecipes) await window.loadAdminRecipes();
+    if (adminRecord && window.loadAdminOnboarding) await window.loadAdminOnboarding();
     return true;
   }
 
