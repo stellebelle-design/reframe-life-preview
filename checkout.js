@@ -206,10 +206,16 @@
           try {
             const confirmationUrl = new URL("order-confirmed.html", window.location.href);
             confirmationUrl.searchParams.set("programme", button.dataset.product);
-            await loadActionsResult.actions.confirm({
+            const confirmationResult = await loadActionsResult.actions.confirm({
               formConfirmEvent: event,
               returnUrl: confirmationUrl.href
             });
+            if (confirmationResult?.type === "success") {
+              window.location.assign(confirmationUrl.href);
+            } else if (confirmationResult?.type === "error") {
+              const detail = confirmationResult.error?.message || "Please check your payment details and try again.";
+              showStatus("Stripe couldn't confirm the payment: " + detail, true);
+            }
           } catch (error) {
             console.error("Stripe payment confirmation error:", error);
             const detail = error?.message || error?.type || "Unknown Stripe confirmation error";
