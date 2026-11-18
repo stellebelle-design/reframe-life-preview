@@ -204,7 +204,10 @@
         }
         form.on("confirm", async (event) => {
           try {
-            await loadActionsResult.actions.confirm({ formConfirmEvent: event });
+            await loadActionsResult.actions.confirm({
+              formConfirmEvent: event,
+              returnUrl: new URL("checkout.html", window.location.href).href
+            });
           } catch (error) {
             console.error("Stripe payment confirmation error:", error);
             const detail = error?.message || error?.type || "Unknown Stripe confirmation error";
