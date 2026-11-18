@@ -230,30 +230,25 @@
   }
 
   async function loadClientProgressReviews(userId) {
-    const section=document.querySelector("#clientProgressReviews"), list=document.querySelector("#clientProgressReviewList");
+    const section=document.querySelector("#clientProgressReviews");
+    const list=document.querySelector("#clientProgressReviewList");
     if(!section||!list)return;
-    try {
-      const {data,error}=await client.from("client_progress_reviews").select("period_start,period_end,progress_summary,wins,challenges,next_goals,coach_feedback").eq("user_id",userId).order("period_start",{ascending:false}).limit(12);
+    section.hidden=false;
+    const progressSection=document.querySelector("#my-progress");
+    if(progressSection)progressSection.hidden=false;
+    const progressNav=document.querySelector("#sidebarProgress");
+    if(progressNav)progressNav.hidden=false;
+
+    async function refreshReviews() {
+      const {data,error}=await client.from("client_progress_reviews")
+        .select("period_start,period_end,progress_summary,wins,challenges,next_goals,coach_feedback,updated_at")
+        .eq("user_id",userId).order("period_start",{ascending:false}).limit(12);
       if(error)throw error;
       list.replaceChildren();
       if(!data?.length){
-        // Show the progress area even without active coaching so the client can
-        // see that their review history is currently empty.
-        section.hidden=false;
-        const progressSection=document.querySelector("#my-progress");
-        if(progressSection)progressSection.hidden=false;
-        const progressNav=document.querySelector("#sidebarProgress");
-        if(progressNav)progressNav.hidden=false;
         list.textContent="No four-week reviews are showing on this account yet. If your coach has saved one, please contact us so we can check it.";
         return;
       }
-      // A saved review remains part of the client's progress history even when
-      // their time-limited coaching access has ended.
-      section.hidden=false;
-      const progressSection=document.querySelector("#my-progress");
-      if(progressSection)progressSection.hidden=false;
-      const progressNav=document.querySelector("#sidebarProgress");
-      if(progressNav)progressNav.hidden=false;
       data.forEach(r=>{
         const card=document.createElement("article");
         card.className="checkin-history-card progress-review-card";
@@ -273,13 +268,18 @@
         body.className="progress-review-body";
         body.hidden=true;
         [["Overall progress",r.progress_summary],["Wins and positive changes",r.wins],["Challenges",r.challenges],["Goals for the next four weeks",r.next_goals]].forEach(([label,value])=>{
-          if(value){const p=document.createElement("p"),b=document.createElement("strong");b.textContent=label+": ";p.append(b,document.createTextNode(value));body.append(p);}
+          if(value){const p=document.createElement("p"),strong=document.createElement("strong");strong.textContent=label+": ";p.append(strong,document.createTextNode(value));body.append(p);}
         });
         if(r.coach_feedback){
           const box=document.createElement("div");box.className="checkin-coach-feedback";
-          const b=document.createElement("strong");b.textContent="A note from your coach";
+          const strong=document.createElement("strong");strong.textContent="A note from your coach";
           const p=document.createElement("p");p.textContent=r.coach_feedback;
-          box.append(b,p);body.append(box);
+          box.append(strong,p);body.append(box);
+        }
+        if(r.updated_at){
+          const updated=document.createElement("small");
+          updated.textContent="Last updated "+new Date(r.updated_at).toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
+          body.append(updated);
         }
         toggle.addEventListener("click",()=>{
           const isOpen=toggle.getAttribute("aria-expanded")==="true";
@@ -290,17 +290,35 @@
         card.append(toggle,body);
         list.append(card);
       });
-    } catch(error){
+    }
+
+    if(!section.querySelector(".progress-review-refresh")){
+      const refreshButton=document.createElement("button");
+      refreshButton.type="button";
+      refreshButton.className="progress-review-refresh";
+      refreshButton.textContent="Refresh reviews";
+      refreshButton.addEventListener("click",async()=>{
+        refreshButton.disabled=true;
+        refreshButton.textContent="Refreshing…";
+        try{await refreshReviews();refreshButton.textContent="Reviews updated";}
+        catch(error){console.error("Could not refresh progress reviews:",error);refreshButton.textContent="Couldn't refresh — try again";}
+        finally{refreshButton.disabled=false;}
+      });
+      section.insertBefore(refreshButton,list);
+    }
+    try{
+      await refreshReviews();
+    }catch(error){
       console.error("Could not load progress reviews:",error);
-      // Keep the area visible so a data/permission problem is not mistaken
-      // for a missing navigation item.
-      section.hidden=false;
-      const progressSection=document.querySelector("#my-progress");
-      if(progressSection)progressSection.hidden=false;
-      const progressNav=document.querySelector("#sidebarProgress");
-      if(progressNav)progressNav.hidden=false;
       list.textContent="We couldn't load your four-week reviews just now. Please refresh or contact your coach if this continues.";
     }
+    const refreshWhenVisible=()=>{
+      if(document.visibilityState==="visible"){
+        refreshReviews().catch(error=>console.error("Could not refresh progress reviews:",error));
+      }
+    };
+    window.addEventListener("focus",refreshWhenVisible);
+    document.addEventListener("visibilitychange",refreshWhenVisible);
   }
 
   async function checkAccess(session) {
