@@ -225,7 +225,7 @@
     const progressNav=document.querySelector("#sidebarProgress"); if(progressNav)progressNav.hidden=document.querySelector("#my-progress")?.hidden ?? true;
     await loadClientDashboard(session.user.id);
     await loadClientCheckins(session.user.id);
-    const progressNav=document.querySelector("#sidebarProgress"); if(progressNav)progressNav.hidden=document.querySelector("#my-progress")?.hidden ?? true;
+    const progressNavAfterCheckins=document.querySelector("#sidebarProgress"); if(progressNavAfterCheckins)progressNavAfterCheckins.hidden=document.querySelector("#my-progress")?.hidden ?? true;
     await loadClientProgressReviews(session.user.id);
     await loadPublishedRecipes({ isAdmin: !!adminRecord, userId: session.user.id });
     if (adminRecord && window.loadAdminRecipes) await window.loadAdminRecipes();
