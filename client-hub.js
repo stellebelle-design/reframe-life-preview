@@ -114,8 +114,8 @@
       }
       if (checkinHeading) checkinHeading.hidden = false;
       form.hidden = false;
-      const historyPanel = history.closest(".checkin-history");
-      if (historyPanel) historyPanel.hidden = false;
+      const visibleHistoryPanel = history.closest(".checkin-history");
+      if (visibleHistoryPanel) visibleHistoryPanel.hidden = false;
       section.hidden = false;
       const today = new Date();
       const monday = new Date(today);
