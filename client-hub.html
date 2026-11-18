@@ -79,6 +79,11 @@
           <div class="admin-actions"><button class="admin-save" type="submit" id="adminSave">Save recipe</button><button class="admin-cancel" type="button" id="adminCancel" hidden>Cancel edit</button><span id="adminMessage" role="status" aria-live="polite"></span></div>
         </form>
         <div class="admin-list-wrap"><h3>Your recipes</h3><div id="adminRecipeList" class="admin-recipe-list"></div></div>
+        <div class="admin-list-wrap onboarding-admin-wrap">
+          <div class="admin-submissions-heading"><div><h3>Client questionnaires</h3><p class="section-intro">Private submissions from clients with paid or active programmes.</p></div><button type="button" class="admin-row-button" id="refreshOnboarding">Refresh submissions</button></div>
+          <p id="onboardingAdminMessage" class="admin-status" role="status" aria-live="polite">Submissions will appear here.</p>
+          <div id="onboardingAdminList" class="onboarding-admin-list"></div>
+        </div>
       </section>
 
       <section class="section recipes-section" id="recipes">
@@ -146,5 +151,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
   <script src="client-hub.js?v=20261117-loginfix4"></script>
+  <script src="admin-onboarding.js?v=20261118-1"></script>
 </body>
 </html>
