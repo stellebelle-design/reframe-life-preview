@@ -163,6 +163,37 @@
         }
       }
       await refreshHistory();
+
+      // Keep coach replies current when a client returns to the Client Hub.
+      const historyPanel = history.closest(".checkin-history");
+      if (historyPanel && !historyPanel.querySelector(".checkin-refresh")) {
+        const refreshButton = document.createElement("button");
+        refreshButton.type = "button";
+        refreshButton.className = "checkin-refresh";
+        refreshButton.textContent = "Refresh check-ins";
+        refreshButton.addEventListener("click", async () => {
+          refreshButton.disabled = true;
+          refreshButton.textContent = "Refreshing…";
+          try {
+            await refreshHistory();
+            refreshButton.textContent = "Check-ins updated";
+          } catch (error) {
+            console.error("Could not refresh client check-ins:", error);
+            refreshButton.textContent = "Couldn't refresh — try again";
+          } finally {
+            refreshButton.disabled = false;
+          }
+        });
+        historyPanel.insertBefore(refreshButton, history);
+      }
+      const refreshWhenVisible = () => {
+        if (document.visibilityState === "visible") {
+          refreshHistory().catch(error => console.error("Could not refresh client check-ins:", error));
+        }
+      };
+      window.addEventListener("focus", refreshWhenVisible);
+      document.addEventListener("visibilitychange", refreshWhenVisible);
+
       form.addEventListener("submit", async event => {
         event.preventDefault();
         const submit=document.querySelector("#checkinSubmit");
