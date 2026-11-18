@@ -215,7 +215,7 @@
   </div>
 </dialog>
 <style>
-.programme-dialog{width:min(92vw,650px);max-height:85vh;overflow:auto;border:0;border-radius:18px;padding:0;background:#fffaf6;color:#403832;box-shadow:0 20px 70px rgba(0,0,0,.25)}
+.programme-dialog{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);margin:0;width:min(92vw,650px);max-height:85vh;overflow:auto;border:0;border-radius:18px;padding:0;background:#fffaf6;color:#403832;box-shadow:0 20px 70px rgba(0,0,0,.25)}
 .programme-dialog::backdrop{background:rgba(40,34,30,.62);backdrop-filter:blur(3px)}
 .programme-dialog-inner{position:relative;padding:clamp(24px,5vw,42px);font-family:Jost,sans-serif;line-height:1.65}
 .programme-dialog-inner h2{font:500 clamp(30px,5vw,40px)/1.1 'Cormorant Garamond',serif;margin:8px 40px 8px 0}
@@ -226,7 +226,7 @@
 .programme-dialog-price span{font-size:14px;font-weight:400;color:#756b63}
 .programme-dialog-close{position:absolute;right:18px;top:14px;border:0;background:transparent;color:#51473f;font-size:30px;line-height:1;cursor:pointer;padding:6px}
 .programme-dialog-continue{display:inline-block;margin-top:18px;text-align:center}
-@media(max-width:520px){.programme-dialog{width:calc(100vw - 24px);max-height:88vh}.programme-dialog-inner{padding:26px 22px}.programme-dialog-continue{width:100%;box-sizing:border-box}}
+@media(max-width:520px){.programme-dialog{left:50%;top:50%;width:calc(100vw - 24px);max-height:88vh}.programme-dialog-inner{padding:26px 22px}.programme-dialog-continue{width:100%;box-sizing:border-box}}
 </style>
 
 <!-- THE REFRAME EXPERIENCE -->
