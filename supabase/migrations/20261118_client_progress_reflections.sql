@@ -21,3 +21,5 @@ drop policy if exists "Clients can update own progress reflections" on public.cl
 create policy "Clients can update own progress reflections" on public.client_progress_reflections for update to authenticated using(auth.uid()=user_id) with check(auth.uid()=user_id and exists(select 1 from public.client_progress_reviews r where r.user_id=auth.uid() and r.period_start=client_progress_reflections.period_start));
 drop policy if exists "Admins can view client progress reflections" on public.client_progress_reflections;
 create policy "Admins can view client progress reflections" on public.client_progress_reflections for select to authenticated using(exists(select 1 from public.admin_users au where au.user_id=auth.uid()));
+
+grant select, insert, update on public.client_progress_reflections to authenticated;
