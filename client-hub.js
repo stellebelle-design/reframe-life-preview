@@ -228,6 +228,7 @@
     if (adminRecord && window.loadAdminRecipes) await window.loadAdminRecipes();
     if (adminRecord && window.loadAdminOnboarding) await window.loadAdminOnboarding();
     if (adminRecord && window.loadAdminCheckins) await window.loadAdminCheckins();
+    if (adminRecord && window.loadAdminProgressReviews) await window.loadAdminProgressReviews();
     return true;
   }
 
