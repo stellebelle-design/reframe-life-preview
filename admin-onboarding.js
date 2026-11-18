@@ -142,3 +142,51 @@
   refresh?.addEventListener("click",load);
   window.loadAdminCheckins=load;
 })();
+
+/* Four-week progress reviews: admin editor, with client visibility protected by database RLS. */
+(function(){
+ const client=window.reframeSupabaseClient,root=document.querySelector("#progressReviewAdmin"),status=document.querySelector("#progressReviewAdminMessage"),refresh=document.querySelector("#refreshProgressReviews");
+ if(!client||!root||!status)return;
+ let checkins=[];
+ const dateOnly=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
+ const displayDate=s=>new Date(s+"T12:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
+ const make=(tag,cls,txt)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(txt!==undefined)n.textContent=txt;return n;};
+ async function load(){
+  status.textContent="Loading clients and recent check-ins…";root.replaceChildren();if(refresh)refresh.disabled=true;
+  try{
+   const {data,error}=await client.from("client_checkins").select("user_id,week_start,energy,mood,confidence,consistency,wins,support_needed").order("week_start",{ascending:false}).limit(500);
+   if(error)throw error;checkins=data||[];
+   const ids=[...new Set(checkins.map(x=>x.user_id))];
+   if(!ids.length){status.textContent="No client check-ins yet. Clients will appear here after submitting a weekly check-in.";return;}
+   status.textContent=ids.length+" client"+(ids.length===1?"":"s")+" with check-ins."; 
+   const controls=make("div","progress-review-controls");const clientLabel=make("label",null,"Choose client");const select=make("select");
+   ids.forEach(id=>{const option=make("option",null,"Client account · "+id);option.value=id;select.append(option);});clientLabel.append(select);
+   const periodLabel=make("label",null,"Review period starts");const start=make("input");start.type="date";periodLabel.append(start);controls.append(clientLabel,periodLabel);root.append(controls);
+   const panel=make("div");root.append(panel);
+   async function showClient(){
+    const uid=select.value,rows=checkins.filter(x=>x.user_id===uid).slice(0,4);
+    start.value=rows.length?rows[rows.length-1].week_start:dateOnly(new Date());
+    const {data:existing,error:reviewError}=await client.from("client_progress_reviews").select("*").eq("user_id",uid).eq("period_start",start.value).maybeSingle();
+    if(reviewError)throw reviewError;panel.replaceChildren();
+    const history=make("div","progress-review-checkins");history.append(make("h4",null,"Recent weekly check-ins"));
+    if(!rows.length)history.append(make("p",null,"No check-ins found for this client."));
+    rows.forEach(item=>{const line=make("div","progress-review-checkin");line.append(make("strong",null,displayDate(item.week_start)+" · "),document.createTextNode("Energy "+item.energy+"/5 · Mood "+item.mood+"/5 · Confidence "+item.confidence+"/5 · Consistency "+item.consistency+"/5"));if(item.wins)line.append(make("p",null,"Proud of: "+item.wins));if(item.support_needed)line.append(make("p",null,"Support wanted: "+item.support_needed));history.append(line);});
+    const form=make("form","progress-review-form");const endDate=new Date(start.value+"T12:00:00");endDate.setDate(endDate.getDate()+27);
+    const fields=[["progress_summary","Overall progress","What has changed over the last four weeks?"],["wins","Wins and positive changes","Celebrate progress beyond the scales too."],["challenges","Challenges or support needed","What has felt difficult or needs attention?"],["next_goals","Goals for the next four weeks","Agree realistic, meaningful next steps."],["coach_feedback","Your feedback for the client","Write your personal review and encouragement."]];
+    const inputs={};fields.forEach(([key,label,placeholder])=>{const wrap=make("label",null,label);const area=make("textarea");area.rows=3;area.maxLength=5000;area.placeholder=placeholder;area.value=existing?.[key]||"";wrap.append(area);form.append(wrap);inputs[key]=area;});
+    form.append(make("p","submission-meta","Review period: "+displayDate(start.value)+" – "+displayDate(dateOnly(endDate))));
+    const save=make("button","admin-save","Save four-week review");save.type="submit";const msg=make("p",null,"");msg.id="progressReviewSaveMessage";msg.setAttribute("role","status");form.append(save,msg);panel.append(history,form);
+    form.addEventListener("submit",async event=>{event.preventDefault();save.disabled=true;save.textContent="Saving…";msg.textContent="";
+     try{const payload={user_id:uid,period_start:start.value,period_end:dateOnly(endDate),progress_summary:inputs.progress_summary.value.trim(),wins:inputs.wins.value.trim(),challenges:inputs.challenges.value.trim(),next_goals:inputs.next_goals.value.trim(),coach_feedback:inputs.coach_feedback.value.trim(),updated_at:new Date().toISOString()};
+      const {error:saveError}=await client.from("client_progress_reviews").upsert(payload,{onConflict:"user_id,period_start"});if(saveError)throw saveError;msg.textContent="Four-week review saved. The client can now see it in their Client Hub.";save.textContent="Update four-week review";
+     }catch(error){console.error("Could not save progress review:",error);msg.textContent="We couldn’t save the review. Please try again.";save.textContent="Save four-week review";}finally{save.disabled=false;}
+    });
+   }
+   select.addEventListener("change",()=>showClient().catch(error=>{console.error(error);status.textContent="Couldn’t load this client’s review."; }));
+   start.addEventListener("change",()=>showClient().catch(error=>{console.error(error);status.textContent="Couldn’t load this review period."; }));
+   await showClient();
+  }catch(error){console.error("Could not load progress review admin:",error);status.textContent="We couldn’t load progress reviews. Please check admin access and try again.";}
+  finally{if(refresh)refresh.disabled=false;}
+ }
+ refresh?.addEventListener("click",load);window.loadAdminProgressReviews=load;
+})();
