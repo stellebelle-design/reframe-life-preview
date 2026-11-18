@@ -158,11 +158,13 @@
    if(error)throw error;checkins=data||[];
    const {data:accessRows,error:accessError}=await client.from("client_access").select("user_id,status").eq("status","active");
    if(accessError)throw accessError;
-   const {data:reviewRows,error:reviewsError}=await client.from("client_progress_reviews").select("user_id,period_start").order("period_start",{ascending:false});
+   const {data:reviewRows,error:reviewsError}=await client.from("client_progress_reviews").select("user_id,period_start,period_end").order("period_start",{ascending:false});
    if(reviewsError)throw reviewsError;
+   const {data:scheduleRows,error:scheduleError}=await client.from("client_programme_schedules").select("user_id,programme_start_date");
+   if(scheduleError)throw scheduleError;
    const {data:reflectionRows,error:reflectionError}=await client.from("client_progress_reflections").select("user_id,period_start,what_went_well,proud_of,challenging,next_focus,updated_at");
    if(reflectionError)throw reflectionError;
-   const ids=[...new Set([...checkins.map(x=>x.user_id),...(accessRows||[]).map(x=>x.user_id),...(reviewRows||[]).map(x=>x.user_id)].filter(Boolean))];
+   const ids=[...new Set([...checkins.map(x=>x.user_id),...(accessRows||[]).map(x=>x.user_id),...(reviewRows||[]).map(x=>x.user_id),...(scheduleRows||[]).map(x=>x.user_id)].filter(Boolean))];
    if(!ids.length){status.textContent="No client accounts found yet.";return;}
    status.textContent=ids.length+" client account"+(ids.length===1?"":"s")+" available.";
    const controls=make("div","progress-review-controls");const clientLabel=make("label",null,"Choose client");const select=make("select");
@@ -170,10 +172,10 @@
    const periodLabel=make("label",null,"Review period starts");const start=make("input");start.type="date";periodLabel.append(start);controls.append(clientLabel,periodLabel);root.append(controls);
    const panel=make("div");root.append(panel);
    function defaultStart(uid){
-    const saved=(reviewRows||[]).filter(x=>x.user_id===uid).map(x=>x.period_start).sort().reverse();
-    if(saved.length)return saved[0];
-    const rows=checkins.filter(x=>x.user_id===uid).map(x=>x.week_start).sort().reverse();
-    return rows[rows.length-1]||dateOnly(new Date());
+    const saved=(reviewRows||[]).filter(x=>x.user_id===uid).sort((a,b)=>b.period_start.localeCompare(a.period_start));
+    if(saved.length&&saved[0].period_end){const next=new Date(saved[0].period_end+"T12:00:00");next.setDate(next.getDate()+1);return dateOnly(next);}
+    const schedule=(scheduleRows||[]).find(x=>x.user_id===uid);
+    return schedule?.programme_start_date||"";
    }
    start.value=defaultStart(select.value);
    async function showClient(){
@@ -201,7 +203,7 @@
     const history=make("div","progress-review-checkins");history.append(make("h4",null,"Recent weekly check-ins"));
     if(!rows.length)history.append(make("p",null,"No check-ins found for this client."));
     rows.forEach(item=>{const line=make("div","progress-review-checkin");line.append(make("strong",null,displayDate(item.week_start)+" · "),document.createTextNode("Energy "+item.energy+"/5 · Mood "+item.mood+"/5 · Confidence "+item.confidence+"/5 · Consistency "+item.consistency+"/5"));if(item.wins)line.append(make("p",null,"Proud of: "+item.wins));if(item.support_needed)line.append(make("p",null,"Support wanted: "+item.support_needed));history.append(line);});
-    const form=make("form","progress-review-form");const endDate=new Date(start.value+"T12:00:00");endDate.setDate(endDate.getDate()+27);
+    const form=make("form","progress-review-form");const endDate=new Date(start.value+"T12:00:00");endDate.setDate(endDate.getDate()+27);while(endDate.getDay()!==0)endDate.setDate(endDate.getDate()+1);
     const fields=[["progress_summary","Overall progress","What has changed over the last four weeks?"],["wins","Wins and positive changes","Celebrate progress beyond the scales too."],["challenges","Challenges or support needed","What has felt difficult or needs attention?"],["next_goals","Goals for the next four weeks","Agree realistic, meaningful next steps."],["coach_feedback","Your feedback for the client","Write your personal review and encouragement."]];
     const inputs={};fields.forEach(([key,label,placeholder])=>{const wrap=make("label",null,label);const area=make("textarea");area.rows=3;area.maxLength=5000;area.placeholder=placeholder;area.value=existing?.[key]||"";wrap.append(area);form.append(wrap);inputs[key]=area;});
     form.append(make("p","submission-meta","Review period: "+displayDate(start.value)+" – "+displayDate(dateOnly(endDate))));
