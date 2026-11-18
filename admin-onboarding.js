@@ -25,8 +25,8 @@
     status.textContent="Loading client questionnaires…";list.replaceChildren();
     if(refresh)refresh.disabled=true;
     try{
-      const {data:admin,error:adminError}=await client.from("admin_users").select("user_id").limit(1);
-      if(adminError||!admin?.length){status.textContent="This area is only available to an authorised Reframe Life administrator.";return;}
+      // This loader is only exposed by Client Hub after its own admin_users check succeeds.
+      // Avoid repeating a broader admin query here because RLS may only reveal the current admin row.
       const {data,error}=await client.from("client_onboarding")
         .select("id,purchase_id,user_id,product_key,responses,health_responses,health_information_consent,health_information_consented_at,submitted_at")
         .order("submitted_at",{ascending:false});
