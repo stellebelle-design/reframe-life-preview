@@ -16,9 +16,15 @@
   };
 
   let client = null;
-  if (window.supabase && config?.url && config?.publishableKey) {
-    client = window.supabase.createClient(config.url, config.publishableKey);
-    window.reframeSupabaseClient = client;
+  let clientInitError = null;
+  try {
+    if (window.supabase && config?.url && config?.publishableKey) {
+      client = window.supabase.createClient(config.url, config.publishableKey);
+      window.reframeSupabaseClient = client;
+    }
+  } catch (error) {
+    clientInitError = error;
+    console.error("Reframe Life sign-in service could not initialise:", error);
   }
 
   async function loadClientDashboard(userId) {
@@ -316,7 +322,9 @@
     event.preventDefault();
     if (loginForm && !loginForm.reportValidity()) return;
     if (!client) {
-      showMessage("The sign-in service hasn't loaded. Please refresh the page and try again.");
+      showMessage(clientInitError
+        ? "The sign-in service couldn't start. Please contact Reframe Life so we can check the connection."
+        : "The sign-in service hasn't loaded. Please refresh the page and try again.");
       return;
     }
     if (loginSubmit) {
