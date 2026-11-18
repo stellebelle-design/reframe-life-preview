@@ -41,6 +41,41 @@
         .eq("user_id", userId)
         .order("created_at", { ascending: false });
       if (error) throw error;
+      const latestPurchase = (data || [])[0];
+      const nextTitle = document.querySelector("#dashboardNextTitle");
+      const nextCopy = document.querySelector("#dashboardNextCopy");
+      const nextLink = document.querySelector("#dashboardNextLink");
+      let onboarding = null;
+      let readiness = null;
+      if (latestPurchase) {
+        const { data: submitted, error: onboardingError } = await client.from("client_onboarding")
+          .select("id,submitted_at").eq("purchase_id", latestPurchase.id).maybeSingle();
+        if (onboardingError) throw onboardingError;
+        onboarding = submitted;
+        if (onboarding) {
+          const { data: ready, error: readinessError } = await client.from("client_programme_readiness")
+            .select("is_ready").eq("purchase_id", latestPurchase.id).maybeSingle();
+          if (readinessError) throw readinessError;
+          readiness = !!ready?.is_ready;
+        }
+      }
+      if (nextTitle && nextCopy && nextLink) {
+        if (!onboarding) {
+          nextTitle.textContent = "Your next step";
+          nextCopy.textContent = "Tell me a little more about yourself so I can shape your programme and support around what matters to you.";
+          nextLink.hidden = false;
+          nextLink.textContent = "Complete your questionnaire";
+          nextLink.href = "onboarding.html";
+        } else if (!readiness) {
+          nextTitle.textContent = "Your programme is taking shape";
+          nextCopy.textContent = "Thank you for sharing your answers. I've got your details and am putting your personalised support together. I'll let you know when everything is ready.";
+          nextLink.hidden = true;
+        } else {
+          nextTitle.textContent = "It's time to get started!";
+          nextCopy.textContent = "You've got your plan, you've got your support, and you've got everything you need to begin. Take it one step at a time, believe in yourself and go smash those goals!";
+          nextLink.hidden = true;
+        }
+      }
       const labels = {
         personalised_programme: "Personalised Training Programme",
         coaching_4_week: "Four-Week Coaching",
@@ -314,6 +349,7 @@
     if (adminRecord && window.loadAdminOnboarding) await window.loadAdminOnboarding();
     if (adminRecord && window.loadAdminCheckins) await window.loadAdminCheckins();
     if (adminRecord && window.loadAdminProgressReviews) await window.loadAdminProgressReviews();
+    if (adminRecord && window.loadAdminProgrammeReadiness) await window.loadAdminProgrammeReadiness();
     return true;
   }
 
@@ -743,4 +779,60 @@ dialog?.addEventListener("click",event=>{if(event.target===dialog) dialog.close(
  focusedButton?.addEventListener("click",()=>setMode(false));
  window.showClientHubSection=show;
  show("home");
+})();
+
+/* Admin control for the point at which a client's personalised programme is ready. */
+(function initialiseProgrammeReadiness(){
+  const client=window.reframeSupabaseClient;
+  const list=document.querySelector("#programmeReadinessList");
+  const status=document.querySelector("#programmeReadinessMessage");
+  const refresh=document.querySelector("#refreshProgrammeReadiness");
+  if(!client||!list||!status)return;
+  const labels={personalised_programme:"Personalised Training Programme",coaching_4_week:"Four-Week Coaching",coaching_8_week:"Eight-Week Coaching",coaching_12_week:"Twelve-Week Coaching",coaching_6_month:"Six-Month Ongoing Coaching"};
+  async function load(){
+    status.textContent="Loading submitted questionnaires…";list.replaceChildren();if(refresh)refresh.disabled=true;
+    try{
+      const {data:forms,error}=await client.from("client_onboarding")
+        .select("purchase_id,user_id,product_key,responses,submitted_at")
+        .order("submitted_at",{ascending:false});
+      if(error)throw error;
+      if(!forms?.length){status.textContent="No submitted questionnaires yet.";return;}
+      const ids=[...new Set(forms.map(x=>x.user_id).filter(Boolean))];
+      const {data:access,error:accessError}=await client.from("client_access").select("user_id,status").in("user_id",ids);
+      if(accessError)throw accessError;
+      const active=new Set((access||[]).filter(x=>x.status==="active").map(x=>x.user_id));
+      const visible=forms.filter(x=>active.has(x.user_id));
+      if(!visible.length){status.textContent="No submitted questionnaires for active client accounts.";return;}
+      status.textContent=visible.length+" submitted programme"+(visible.length===1?"":"s")+" to review.";
+      for(const item of visible){
+        const {data:ready,error:readyError}=await client.from("client_programme_readiness")
+          .select("is_ready").eq("purchase_id",item.purchase_id).maybeSingle();
+        if(readyError)throw readyError;
+        const row=document.createElement("article");row.className="onboarding-submission";
+        const details=document.createElement("div");details.className="submission-details";
+        const heading=document.createElement("strong");heading.textContent=item.responses?.name||"Client";
+        const packageName=document.createElement("p");packageName.textContent=labels[item.product_key]||"Reframe Life programme";
+        const submitted=document.createElement("small");submitted.textContent="Questionnaire submitted "+new Date(item.submitted_at).toLocaleDateString("en-GB");
+        const control=document.createElement("label");control.className="admin-publish";
+        const checkbox=document.createElement("input");checkbox.type="checkbox";checkbox.checked=!!ready?.is_ready;
+        const label=document.createElement("span");label.textContent="Programme prepared and shared with client";
+        const message=document.createElement("p");message.className="admin-status";message.setAttribute("role","status");
+        checkbox.addEventListener("change",async()=>{
+          checkbox.disabled=true;message.textContent="Saving…";
+          try{
+            const {error:saveError}=await client.from("client_programme_readiness").upsert({
+              purchase_id:item.purchase_id,user_id:item.user_id,is_ready:checkbox.checked,updated_at:new Date().toISOString()
+            },{onConflict:"purchase_id"});
+            if(saveError)throw saveError;
+            message.textContent=checkbox.checked?"Marked as ready. The client will now see their encouragement message.":"Marked as not yet ready.";
+          }catch(error){console.error("Could not update programme readiness:",error);checkbox.checked=!checkbox.checked;message.textContent="We couldn't save that change. Please try again.";}
+          finally{checkbox.disabled=false;}
+        });
+        control.append(checkbox,label);details.append(heading,packageName,submitted,control,message);row.append(details);list.append(row);
+      }
+    }catch(error){console.error("Could not load programme readiness:",error);status.textContent="We couldn't load programme readiness. Please check administrator access and try again.";}
+    finally{if(refresh)refresh.disabled=false;}
+  }
+  refresh?.addEventListener("click",load);
+  window.loadAdminProgrammeReadiness=load;
 })();
