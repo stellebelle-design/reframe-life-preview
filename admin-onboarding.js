@@ -165,7 +165,7 @@
    const panel=make("div");root.append(panel);
    async function showClient(){
     const uid=select.value,rows=checkins.filter(x=>x.user_id===uid).slice(0,4);
-    start.value=rows.length?rows[rows.length-1].week_start:dateOnly(new Date());
+    if(!start.value)start.value=rows.length?rows[rows.length-1].week_start:dateOnly(new Date());
     const {data:existing,error:reviewError}=await client.from("client_progress_reviews").select("*").eq("user_id",uid).eq("period_start",start.value).maybeSingle();
     if(reviewError)throw reviewError;panel.replaceChildren();
     const history=make("div","progress-review-checkins");history.append(make("h4",null,"Recent weekly check-ins"));
@@ -182,7 +182,7 @@
      }catch(error){console.error("Could not save progress review:",error);msg.textContent="We couldn’t save the review. Please try again.";save.textContent="Save four-week review";}finally{save.disabled=false;}
     });
    }
-   select.addEventListener("change",()=>showClient().catch(error=>{console.error(error);status.textContent="Couldn’t load this client’s review."; }));
+   select.addEventListener("change",()=>{const rows=checkins.filter(x=>x.user_id===select.value).slice(0,4);start.value=rows.length?rows[rows.length-1].week_start:dateOnly(new Date());showClient().catch(error=>{console.error(error);status.textContent="Couldn’t load this client’s review.";});});
    start.addEventListener("change",()=>showClient().catch(error=>{console.error(error);status.textContent="Couldn’t load this review period."; }));
    await showClient();
   }catch(error){console.error("Could not load progress review admin:",error);status.textContent="We couldn’t load progress reviews. Please check admin access and try again.";}
