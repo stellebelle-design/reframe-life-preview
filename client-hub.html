@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Jost:wght@300;400;500;600&family=Petit+Formal+Script&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="client-hub.css">
+  <link rel="stylesheet" href="client-hub.css?v=20261118-dashboard1">
 </head>
 <body>
   <section class="login-screen" id="loginScreen">
@@ -44,6 +44,26 @@
         <h1>A little space to help<br>you <em>feel your best.</em></h1>
         <p class="welcome-copy">Recipes, inspiration and practical resources to make healthy habits feel like a natural part of everyday life.</p>
         <div class="welcome-note"><span class="note-star">✦</span><span>Your Reframe Life client space.</span></div>
+      </section>
+
+      <section class="client-dashboard" id="clientDashboard" aria-labelledby="dashboardTitle" hidden>
+        <div class="dashboard-heading">
+          <div><p class="eyebrow">A MOMENT FOR YOU</p><h2 id="dashboardTitle">Your coaching, <em>at a glance.</em></h2></div>
+          <span class="dashboard-status" id="dashboardStatus">Loading your details…</span>
+        </div>
+        <div class="dashboard-grid">
+          <article class="dashboard-card dashboard-coaching">
+            <p class="dashboard-label">YOUR PROGRAMME</p>
+            <h3 id="dashboardProgramme">Loading your programme…</h3>
+            <p id="dashboardProgrammeDetail">We're gathering your latest account details.</p>
+          </article>
+          <article class="dashboard-card">
+            <p class="dashboard-label">A GOOD PLACE TO START</p>
+            <h3>Your next step</h3>
+            <p>Keep your programme details up to date so your support can reflect what you need.</p>
+            <a class="dashboard-link" href="onboarding.html">Open your questionnaire <span aria-hidden="true">↗</span></a>
+          </article>
+        </div>
       </section>
 
       <section class="quick-links" aria-label="Resource sections">
@@ -150,7 +170,7 @@
   </dialog>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
-  <script src="client-hub.js?v=20261118-coaching-access2"></script>
+  <script src="client-hub.js?v=20261118-dashboard1"></script>
   <script src="admin-onboarding.js?v=20261118-1"></script>
 </body>
 </html>
