@@ -114,7 +114,7 @@
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: window.location.origin + "/checkout.html" }
+          options: { emailRedirectTo: new URL("checkout.html", window.location.href).href }
         });
         if (error) throw error;
         if (data.session?.user) {
