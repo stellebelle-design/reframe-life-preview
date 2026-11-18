@@ -665,7 +665,7 @@ dialog?.addEventListener("click",event=>{if(event.target===dialog) dialog.close(
   window.loadAdminRecipes=loadAdminRecipes;
 })();
 
-/* Client Hub app-style navigation: show one destination at a time. */
+/* Client Hub navigation: focused sections or a full-page scroll view. */
 (function(){
  const links=[...document.querySelectorAll(".sidebar-link[data-section]")];
  const homeItems=[
@@ -680,6 +680,8 @@ dialog?.addEventListener("click",event=>{if(event.target===dialog) dialog.close(
  const guideCard=resources?.querySelector(".lower-card:not(#planning)");
  const planningCard=document.querySelector("#planning");
  const admin=document.querySelector("#adminPanel");
+ const viewAllButton=document.querySelector("#hubViewAll");
+ const focusedButton=document.querySelector("#hubFocusedView");
  const destinations={
   home:homeItems,
   "my-progress":[progress],
@@ -688,6 +690,23 @@ dialog?.addEventListener("click",event=>{if(event.target===dialog) dialog.close(
   planning:[resources],
   adminPanel:[admin]
  };
+ function setMode(all){
+  document.body.classList.toggle("hub-view-all",all);
+  if(viewAllButton)viewAllButton.setAttribute("aria-pressed",String(all));
+  if(focusedButton)focusedButton.setAttribute("aria-pressed",String(!all));
+  if(all){
+   [...homeItems,progress,recipes,resources].filter(Boolean).forEach(item=>item.hidden=false);
+   if(guideCard)guideCard.hidden=false;
+   if(planningCard)planningCard.hidden=false;
+   // Never expose private admin tools to a non-admin account.
+   const adminNav=document.querySelector("#sidebarAdmin");
+   if(admin)admin.hidden=!!adminNav?.hidden;
+   links.forEach(link=>link.classList.remove("active"));
+   window.scrollTo({top:0,behavior:"smooth"});
+  }else{
+   show("home");
+  }
+ }
  function show(name){
   const chosen=destinations[name]||homeItems;
   [...homeItems,progress,recipes,resources,admin].filter(Boolean).forEach(item=>{
@@ -699,14 +718,20 @@ dialog?.addEventListener("click",event=>{if(event.target===dialog) dialog.close(
   }
   links.forEach(link=>link.classList.toggle("active",link.dataset.section===name));
   if(name==="home"&&document.querySelector(".quick-links"))document.querySelector(".quick-links").hidden=false;
+  document.body.classList.remove("hub-view-all");
+  if(viewAllButton)viewAllButton.setAttribute("aria-pressed","false");
+  if(focusedButton)focusedButton.setAttribute("aria-pressed","true");
   window.scrollTo({top:0,behavior:"smooth"});
  }
  links.forEach(link=>link.addEventListener("click",event=>{
   event.preventDefault();
   const name=link.dataset.section;
   if(name==="my-progress"&&link.hidden)return;
+  setMode(false);
   show(name);
  }));
+ viewAllButton?.addEventListener("click",()=>setMode(true));
+ focusedButton?.addEventListener("click",()=>setMode(false));
  window.showClientHubSection=show;
  show("home");
 })();
