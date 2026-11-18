@@ -108,3 +108,12 @@
 .checkin-history-card p{font-size:.8rem;color:var(--ink-soft);margin:7px 0 0;white-space:pre-wrap}
 .checkin-history-ratings{font-size:.7rem!important;letter-spacing:.02em}
 @media(max-width:600px){.checkin-ratings{grid-template-columns:1fr}.checkin-actions{align-items:flex-start;flex-direction:column}}
+
+.checkin-coach-feedback{margin-top:15px;padding:15px 17px;background:var(--cream-deep);border-left:3px solid var(--sage)}
+.checkin-coach-feedback strong{font:500 1.05rem var(--serif);color:var(--ink)}
+.checkin-coach-feedback p{margin:7px 0 4px!important;color:var(--ink)!important;white-space:pre-wrap}
+.checkin-coach-feedback small{font-size:.67rem;color:var(--ink-soft)}
+.checkin-feedback-label{display:block;margin:18px 0 7px;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft)}
+.checkin-admin-answer{font-size:.82rem;color:var(--ink-soft);white-space:pre-wrap}
+.checkin-admin-answer strong{color:var(--ink);font-weight:500}
+.checkin-feedback-label+textarea{width:100%;padding:12px;border:1px solid var(--line);background:var(--cream);font:400 .85rem var(--sans);resize:vertical;margin-bottom:12px}
