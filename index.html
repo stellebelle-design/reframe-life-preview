@@ -10,6 +10,19 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&family=Petit+Formal+Script&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+
+<style>
+#reframePasswordReset{position:fixed;inset:0;z-index:99999;background:rgba(40,34,30,.62);display:none;align-items:center;justify-content:center;padding:20px;font-family:Jost,sans-serif}
+#reframePasswordReset.is-open{display:flex}
+#reframePasswordReset .reset-card{width:min(100%,460px);background:#fffaf6;border-radius:20px;padding:34px;box-shadow:0 18px 60px rgba(0,0,0,.2);color:#403832}
+#reframePasswordReset h2{font:500 34px/1.1 'Cormorant Garamond',serif;margin:8px 0 12px}
+#reframePasswordReset p{line-height:1.6}
+#reframePasswordReset label{display:block;margin:18px 0 6px;font-size:14px}
+#reframePasswordReset input{box-sizing:border-box;width:100%;padding:13px;border:1px solid #d8cec5;border-radius:9px;font:inherit;background:#fff}
+#reframePasswordReset button{margin-top:22px;padding:13px 20px;border:0;border-radius:9px;background:#5b5149;color:#fff;font:inherit;cursor:pointer}
+#reframePasswordReset button:disabled{opacity:.6;cursor:wait}
+#reframePasswordReset .reset-message{min-height:24px;margin-top:14px;font-size:14px}
+</style>
 </head>
 <body>
 
@@ -242,5 +255,57 @@
 <!-- EmailOctopus Form Script -->
 <script async src="https://eomail5.com/form/660862b2-b74a-11f1-b448-7b91a51409b4.js" data-form="660862b2-b74a-11f1-b448-7b91a51409b4"></script>
 
+
+<div id="reframePasswordReset" role="dialog" aria-modal="true" aria-labelledby="reframeResetTitle">
+  <div class="reset-card">
+    <p class="eyebrow">THE REFRAME LIFE CLIENT SPACE</p>
+    <h2 id="reframeResetTitle">Choose a new <em>password.</em></h2>
+    <p>Set a new password for your Reframe Life account. Please choose one you haven't used elsewhere.</p>
+    <form id="reframeResetForm">
+      <label for="reframeNewPassword">New password</label>
+      <input id="reframeNewPassword" type="password" autocomplete="new-password" minlength="8" required placeholder="At least 8 characters">
+      <label for="reframeConfirmPassword">Confirm new password</label>
+      <input id="reframeConfirmPassword" type="password" autocomplete="new-password" minlength="8" required placeholder="Enter it again">
+      <button id="reframeResetSubmit" type="submit">Save new password</button>
+      <p class="reset-message" id="reframeResetMessage" role="status" aria-live="polite"></p>
+    </form>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script>
+(function(){
+  const resetLayer=document.getElementById("reframePasswordReset");
+  const resetForm=document.getElementById("reframeResetForm");
+  if(!resetLayer||!resetForm||!window.supabase||!window.REFRAME_SUPABASE_CONFIG)return;
+  const params=new URLSearchParams(window.location.search);
+  const recoveryInUrl=window.location.hash.includes("type=recovery")||params.get("type")==="recovery";
+  if(!recoveryInUrl)return;
+  const client=window.supabase.createClient(window.REFRAME_SUPABASE_CONFIG.url,window.REFRAME_SUPABASE_CONFIG.publishableKey);
+  const message=document.getElementById("reframeResetMessage");
+  const submit=document.getElementById("reframeResetSubmit");
+  resetLayer.classList.add("is-open");
+  client.auth.getSession().then(({data,error})=>{
+    if(error||!data.session)message.textContent="This reset link may have expired. Please request a new password-reset email from the Client Hub.";
+  });
+  resetForm.addEventListener("submit",async function(event){
+    event.preventDefault();
+    const password=document.getElementById("reframeNewPassword").value;
+    const confirmation=document.getElementById("reframeConfirmPassword").value;
+    if(password.length<8){message.textContent="Please use at least 8 characters.";return;}
+    if(password!==confirmation){message.textContent="Those passwords don't match. Please try again.";return;}
+    submit.disabled=true;submit.textContent="Saving…";message.textContent="";
+    try{
+      const {error}=await client.auth.updateUser({password});
+      if(error)throw error;
+      resetForm.innerHTML='<p class="eyebrow">PASSWORD UPDATED</p><h2>Your password has been <em>changed.</em></h2><p>You can now sign in to your Reframe Life Client Hub using your new password.</p><a href="client-hub.html" style="display:inline-block;margin-top:16px;padding:13px 20px;border-radius:9px;background:#5b5149;color:#fff;text-decoration:none">Go to Client Hub</a>';
+    }catch(error){
+      console.error("Reframe Life password reset failed:",error);
+      message.textContent=error.message||"We couldn't update your password. Please request a fresh reset email and try again.";
+      submit.disabled=false;submit.textContent="Save new password";
+    }
+  });
+})();
+</script>
 </body>
 </html>
