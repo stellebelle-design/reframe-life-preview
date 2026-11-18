@@ -181,3 +181,49 @@
 .progress-client-reflection textarea{display:block;width:100%;margin-top:.45rem;padding:.8rem;border:1px solid var(--line,#ddd);border-radius:9px;font:inherit;resize:vertical;background:#fff;}
 .progress-reflection-message{margin:.75rem 0 0;}
 .progress-client-reflection-admin p{margin:.6rem 0;}
+
+
+/* Responsive layout refinement — keep the Client Hub comfortably centred */
+.hub-shell{width:100%;margin-inline:auto}
+.hub-layout{width:100%;max-width:1500px;margin-inline:auto}
+.hub-main{width:100%;max-width:1080px;justify-self:center}
+.hub-main>.section{width:100%;margin-left:auto;margin-right:auto}
+@media(max-width:900px){
+  .hub-layout{max-width:760px;margin-inline:auto}
+  .hub-main{max-width:720px}
+  .hub-main .section,
+  .hub-main .client-dashboard,
+  .hub-main .admin-panel,
+  .hub-main .lower-sections{max-width:100%}
+}
+@media(max-width:600px){
+  .hub-header{padding-left:18px;padding-right:18px}
+  .brand{font-size:1.4rem}
+  .header-right{gap:10px}
+  .sign-out,.back-link{font-size:.62rem}
+  .hub-layout{padding:0 14px 42px}
+  .hub-sidebar{margin-left:-14px;margin-right:-14px}
+  .sidebar-nav{justify-content:flex-start;padding:0 12px}
+  .hub-main{max-width:100%;min-width:0}
+  .hub-main .welcome{padding:48px 8px 38px}
+  .hub-main .welcome h1{font-size:clamp(2.25rem,9vw,3.15rem);line-height:1.04}
+  .hub-main .welcome-copy{max-width:32rem;font-size:.92rem;margin-top:18px}
+  .hub-main .welcome-note{font-size:.68rem;margin-top:20px}
+  .hub-main .section{padding-left:4px;padding-right:4px;margin-bottom:64px}
+  .hub-main .section-heading h2,
+  .hub-main .lower-card h2,
+  .hub-main .coming-soon h2{font-size:clamp(2rem,8vw,2.8rem)}
+  .hub-main .client-dashboard{padding-left:4px;padding-right:4px}
+  .hub-main .admin-panel{padding:22px 14px}
+  .hub-main .quick-links{padding-left:4px;padding-right:4px}
+  .hub-footer{padding-left:18px;padding-right:18px}
+  .login-screen{padding:28px 18px 24px}
+  .login-brand{font-size:1.5rem;margin-bottom:24px}
+  .login-card{width:min(100%,420px);padding:30px 22px}
+  .login-card h1{font-size:clamp(2.1rem,9vw,2.8rem);line-height:1.04}
+  .login-intro{font-size:.86rem}
+}
+@media(min-width:601px) and (max-width:900px){
+  .hub-layout{padding-left:24px;padding-right:24px}
+  .hub-main .section{padding-left:8px;padding-right:8px}
+}
