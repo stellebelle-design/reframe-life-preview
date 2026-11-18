@@ -665,18 +665,48 @@ dialog?.addEventListener("click",event=>{if(event.target===dialog) dialog.close(
   window.loadAdminRecipes=loadAdminRecipes;
 })();
 
-/* Sidebar navigation active state and smooth section navigation. */
+/* Client Hub app-style navigation: show one destination at a time. */
 (function(){
  const links=[...document.querySelectorAll(".sidebar-link[data-section]")];
- links.forEach(link=>link.addEventListener("click",()=>{
-  links.forEach(item=>item.classList.toggle("active",item===link));
- }));
- const sections=links.map(link=>({link,section:document.getElementById(link.dataset.section)})).filter(x=>x.section);
- if("IntersectionObserver" in window){
-  const observer=new IntersectionObserver(entries=>{
-   const visible=entries.filter(entry=>entry.isIntersecting).sort((a,b)=>b.intersectionRatio-a.intersectionRatio)[0];
-   if(visible)links.forEach(link=>link.classList.toggle("active",link.dataset.section===visible.target.id));
-  },{rootMargin:"-18% 0px -65% 0px",threshold:[0,.1,.3]});
-  sections.forEach(item=>observer.observe(item.section));
+ const homeItems=[
+  document.querySelector("#home"),
+  document.querySelector("#clientDashboard"),
+  document.querySelector(".quick-links"),
+  document.querySelector("#coming-soon")
+ ].filter(Boolean);
+ const progress=document.querySelector("#my-progress");
+ const recipes=document.querySelector("#recipes");
+ const resources=document.querySelector("#guides");
+ const guideCard=resources?.querySelector(".lower-card:not(#planning)");
+ const planningCard=document.querySelector("#planning");
+ const admin=document.querySelector("#adminPanel");
+ const destinations={
+  home:homeItems,
+  "my-progress":[progress],
+  recipes:[recipes],
+  guides:[resources],
+  planning:[resources],
+  adminPanel:[admin]
+ };
+ function show(name){
+  const chosen=destinations[name]||homeItems;
+  [...homeItems,progress,recipes,resources,admin].filter(Boolean).forEach(item=>{
+   item.hidden=!chosen.includes(item);
+  });
+  if(resources){
+   if(guideCard)guideCard.hidden=name==="planning";
+   if(planningCard)planningCard.hidden=name==="guides";
+  }
+  links.forEach(link=>link.classList.toggle("active",link.dataset.section===name));
+  if(name==="home"&&document.querySelector(".quick-links"))document.querySelector(".quick-links").hidden=false;
+  window.scrollTo({top:0,behavior:"smooth"});
  }
+ links.forEach(link=>link.addEventListener("click",event=>{
+  event.preventDefault();
+  const name=link.dataset.section;
+  if(name==="my-progress"&&link.hidden)return;
+  show(name);
+ }));
+ window.showClientHubSection=show;
+ show("home");
 })();
