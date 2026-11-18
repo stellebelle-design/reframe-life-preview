@@ -203,8 +203,14 @@
       if(error)throw error;
       list.replaceChildren();
       if(!data?.length){
-        section.hidden = document.querySelector("#clientCheckinForm")?.hidden ?? true;
-        if (!section.hidden) list.textContent="Your four-week reviews will appear here as they are completed with your coach.";
+        // Show the progress area even without active coaching so the client can
+        // see that their review history is currently empty.
+        section.hidden=false;
+        const progressSection=document.querySelector("#my-progress");
+        if(progressSection)progressSection.hidden=false;
+        const progressNav=document.querySelector("#sidebarProgress");
+        if(progressNav)progressNav.hidden=false;
+        list.textContent="No four-week reviews are showing on this account yet. If your coach has saved one, please contact us so we can check it.";
         return;
       }
       // A saved review remains part of the client's progress history even when
@@ -220,8 +226,14 @@
       });
     } catch(error){
       console.error("Could not load progress reviews:",error);
-      if (!(document.querySelector("#clientCheckinForm")?.hidden ?? true)) section.hidden=false;
-      list.textContent="Your progress reviews couldn’t be loaded just now. Please refresh and try again.";
+      // Keep the area visible so a data/permission problem is not mistaken
+      // for a missing navigation item.
+      section.hidden=false;
+      const progressSection=document.querySelector("#my-progress");
+      if(progressSection)progressSection.hidden=false;
+      const progressNav=document.querySelector("#sidebarProgress");
+      if(progressNav)progressNav.hidden=false;
+      list.textContent="We couldn't load your four-week reviews just now. Please refresh or contact your coach if this continues.";
     }
   }
 
