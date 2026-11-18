@@ -117,3 +117,12 @@
 .checkin-admin-answer{font-size:.82rem;color:var(--ink-soft);white-space:pre-wrap}
 .checkin-admin-answer strong{color:var(--ink);font-weight:500}
 .checkin-feedback-label+textarea{width:100%;padding:12px;border:1px solid var(--line);background:var(--cream);font:400 .85rem var(--sans);resize:vertical;margin-bottom:12px}
+
+.progress-review-client{margin-top:30px}.progress-review-client>h3{font:500 1.5rem var(--serif);margin-bottom:12px}
+.progress-review-admin-wrap #progressReviewAdmin{margin-top:18px}.progress-review-controls{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0}
+.progress-review-controls label,.progress-review-form label{display:block;font-size:.75rem;color:var(--ink-soft)}
+.progress-review-controls select,.progress-review-form textarea{display:block;width:100%;margin-top:7px;padding:12px;border:1px solid var(--line);background:var(--cream);color:var(--ink);font:400 .85rem var(--sans);letter-spacing:normal;text-transform:none}
+.progress-review-form{display:grid;gap:14px;padding:20px;background:var(--white);border:1px solid var(--line)}.progress-review-form textarea{resize:vertical}
+.progress-review-checkins{margin:16px 0;padding:16px;background:var(--cream);border:1px solid var(--line)}.progress-review-checkins h4{font:500 1.2rem var(--serif);margin:0 0 10px}
+.progress-review-checkin{padding:10px 0;border-top:1px solid var(--line);font-size:.78rem;color:var(--ink-soft)}.progress-review-checkin strong{color:var(--ink)}
+#progressReviewSaveMessage{font-size:.78rem;color:var(--sage);margin:0}@media(max-width:600px){.progress-review-controls{grid-template-columns:1fr}}
