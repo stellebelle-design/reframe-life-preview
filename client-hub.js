@@ -21,6 +21,66 @@
     window.reframeSupabaseClient = client;
   }
 
+  async function loadClientDashboard(userId) {
+    const dashboard = document.querySelector("#clientDashboard");
+    const status = document.querySelector("#dashboardStatus");
+    const programme = document.querySelector("#dashboardProgramme");
+    const detail = document.querySelector("#dashboardProgrammeDetail");
+    if (!dashboard || !programme || !detail) return;
+    dashboard.hidden = false;
+    try {
+      const { data, error } = await client
+        .from("client_purchases")
+        .select("product_key,payment_status,created_at")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      const labels = {
+        personalised_programme: "Personalised Training Programme",
+        coaching_4_week: "Four-Week Coaching",
+        coaching_8_week: "Eight-Week Coaching",
+        coaching_12_week: "Twelve-Week Coaching",
+        coaching_6_month: "Six-Month Ongoing Coaching"
+      };
+      const now = Date.now();
+      const durations = {
+        coaching_4_week: 4 * 7 * 24 * 60 * 60 * 1000,
+        coaching_8_week: 8 * 7 * 24 * 60 * 60 * 1000,
+        coaching_12_week: 12 * 7 * 24 * 60 * 60 * 1000
+      };
+      const active = (data || []).find(item => {
+        if (item.product_key === "coaching_6_month") return item.payment_status === "active";
+        const duration = durations[item.product_key];
+        if (!duration || item.payment_status !== "paid" || !item.created_at) return false;
+        const purchasedAt = new Date(item.created_at).getTime();
+        return Number.isFinite(purchasedAt) && now < purchasedAt + duration;
+      });
+      if (active) {
+        programme.textContent = labels[active.product_key] || "Your coaching programme";
+        detail.textContent = active.product_key === "coaching_6_month"
+          ? "Your ongoing coaching subscription is active."
+          : "Your coaching access is active. Your programme resources are ready when you are.";
+        if (status) status.textContent = "YOUR COACHING IS ACTIVE";
+      } else {
+        const personalised = (data || []).find(item =>
+          item.product_key === "personalised_programme" && item.payment_status === "paid"
+        );
+        programme.textContent = personalised
+          ? labels.personalised_programme
+          : "Your Reframe Life space";
+        detail.textContent = personalised
+          ? "Your one-off personalised programme purchase is recorded here. Coaching resources are available with an eligible coaching package."
+          : "Your account is ready. If you have recently purchased coaching, please contact us if your programme isn't showing.";
+        if (status) status.textContent = "YOUR ACCOUNT";
+      }
+    } catch (error) {
+      console.error("Could not load client dashboard:", error);
+      programme.textContent = "Your Reframe Life space";
+      detail.textContent = "We couldn't load your programme details just now. You can still explore the resources available to your account.";
+      if (status) status.textContent = "WELCOME";
+    }
+  }
+
   async function checkAccess(session) {
     if (!session?.user) {
       hubShell.hidden = true;
@@ -43,6 +103,7 @@
     hubShell.hidden = false;
     const { data: adminRecord } = await client.from("admin_users").select("user_id").eq("user_id", session.user.id).maybeSingle();
     if (adminPanel) adminPanel.hidden = !adminRecord;
+    await loadClientDashboard(session.user.id);
     await loadPublishedRecipes({ isAdmin: !!adminRecord, userId: session.user.id });
     if (adminRecord && window.loadAdminRecipes) await window.loadAdminRecipes();
     if (adminRecord && window.loadAdminOnboarding) await window.loadAdminOnboarding();
