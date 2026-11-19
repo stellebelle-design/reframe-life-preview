@@ -988,42 +988,52 @@ dialog?.addEventListener("click",event=>{if(event.target===dialog) dialog.close(
 })();
 
 
-/* Keep the private admin workspace calm and task-focused. */
+/* Build the admin workspace as separate expandable cards. */
 (function organiseAdminWorkspace(){
-  const panel=document.querySelector("#adminPanel");
-  if(!panel)return;
-  const heading=panel.querySelector(".admin-heading");
-  if(heading){
-    const title=heading.querySelector("h2");
-    if(title)title.innerHTML='Your admin <em>workspace.</em>';
-    const intro=heading.querySelector(".section-intro");
-    if(intro)intro.textContent="Everything you need to look after Reframe Life, gathered into simple sections. Open only what you need.";
+  function build(){
+    const panel=document.querySelector("#adminPanel");
+    if(!panel || panel.dataset.workspaceOrganised==="true")return;
+    const heading=panel.querySelector(".admin-heading");
+    if(heading){
+      const title=heading.querySelector("h2");
+      if(title)title.innerHTML='Your admin <em>workspace.</em>';
+      const intro=heading.querySelector(".section-intro");
+      if(intro)intro.textContent="Everything you need to look after Reframe Life, gathered into simple sections. Open only what you need.";
+    }
+    const recipeForm=panel.querySelector("#recipeAdminForm");
+    const recipeList=panel.querySelector(".admin-list-wrap:not(.checkin-admin-wrap):not(.progress-review-admin-wrap):not(.programme-readiness-wrap):not(.client-retention-admin-wrap):not(.onboarding-admin-wrap)");
+    const groups=[
+      {title:"Recipes & resources",nodes:[recipeForm,recipeList]},
+      {title:"Weekly client check-ins",selector:".checkin-admin-wrap",button:"Load check-ins"},
+      {title:"Four-week progress reviews",selector:".progress-review-admin-wrap",button:"Load reviews"},
+      {title:"Programme preparation",selector:".programme-readiness-wrap",button:"Load clients"},
+      {title:"Client questionnaires",selector:".onboarding-admin-wrap",button:"Load submissions"},
+      {title:"Coaching end dates & data retention",selector:".client-retention-admin-wrap",button:"Load client dates"}
+    ];
+    groups.forEach((group,index)=>{
+      const nodes=(group.nodes||[panel.querySelector(group.selector)]).filter(Boolean);
+      if(!nodes.length || nodes.some(node=>node.closest("details.admin-tool-group")))return;
+      const anchor=nodes[0];
+      const details=document.createElement("details");
+      details.className="admin-tool-group";
+      details.open=false;
+      const summary=document.createElement("summary");
+      const label=document.createElement("span");
+      label.textContent=group.title;
+      const hint=document.createElement("span");
+      hint.className="admin-tool-hint";
+      hint.textContent="Open section";
+      summary.append(label,hint);
+      details.append(summary);
+      anchor.parentNode.insertBefore(details,anchor);
+      nodes.forEach(node=>details.append(node));
+      if(group.button){
+        const refresh=details.querySelector(".admin-submissions-heading button");
+        if(refresh)refresh.textContent=group.button;
+      }
+    });
+    panel.dataset.workspaceOrganised="true";
   }
-  const recipeForm=panel.querySelector("#recipeAdminForm");
-  const recipeList=panel.querySelector(".admin-list-wrap:not(.checkin-admin-wrap):not(.progress-review-admin-wrap):not(.programme-readiness-wrap):not(.client-retention-admin-wrap):not(.onboarding-admin-wrap)");
-  const groups=[
-    {title:"Recipes & resources",nodes:[recipeForm,recipeList]},
-    {title:"View weekly client check-ins",selector:".checkin-admin-wrap"},
-    {title:"View four-week progress reviews",selector:".progress-review-admin-wrap"},
-    {title:"View programme preparation",selector:".programme-readiness-wrap"},
-    {title:"View client questionnaires",selector:".onboarding-admin-wrap"},
-    {title:"View coaching end dates & data retention",selector:".client-retention-admin-wrap"}
-  ];
-  groups.forEach((group,index)=>{
-    const nodes=group.nodes||[panel.querySelector(group.selector)].filter(Boolean);
-    if(!nodes.length||nodes.every(node=>!node)||nodes[0]?.closest("details.admin-tool-group"))return;
-    const details=document.createElement("details");
-    details.className="admin-tool-group";
-    details.open=false;
-    const summary=document.createElement("summary");
-    summary.textContent=group.title;
-    const hint=document.createElement("span");
-    hint.className="admin-tool-hint";
-    hint.textContent=index===0?"Click to expand":"Click to expand and view";
-    summary.append(hint);
-    details.append(summary);
-    nodes.filter(Boolean).forEach(node=>details.append(node));
-    const anchor=nodes.find(Boolean);
-    anchor.before(details);
-  });
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",build,{once:true});
+  else build();
 })();
