@@ -86,11 +86,61 @@ async function updateSubscription(subscription: Stripe.Subscription) {
   );
 }
 
-// Revoke a purchase only after Stripe confirms a full refund.
+// Revoke a one-off purchase only after Stripe confirms a full refund.
 // Partial refunds do not automatically remove client access.
 async function handleRefund(charge: Stripe.Charge) {
   if (!charge.refunded) return;
 
+  // Subscription payments are linked through their invoice, not the
+  // Checkout Session's PaymentIntent field.
+  const invoiceId =
+    typeof charge.invoice === "string"
+      ? charge.invoice
+      : charge.invoice?.id;
+
+  if (invoiceId) {
+    const invoice = await stripe.invoices.retrieve(invoiceId);
+    const subscriptionId =
+      typeof invoice.subscription === "string"
+        ? invoice.subscription
+        : invoice.subscription?.id;
+
+    if (subscriptionId) {
+      const { data: purchase, error: lookupError } = await supabase
+        .from("client_purchases")
+        .select("user_id")
+        .eq("stripe_subscription_id", subscriptionId)
+        .maybeSingle();
+
+      if (lookupError) throw lookupError;
+      if (!purchase) {
+        throw new Error(`No purchase found for refunded subscription ${subscriptionId}`);
+      }
+
+      // A refunded invoice does not itself cancel an active subscription.
+      const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+      const stillEntitled = ["active", "trialing", "past_due"].includes(subscription.status);
+
+      if (!stillEntitled) {
+        const { error: updateError } = await supabase
+          .from("client_purchases")
+          .update({ payment_status: "inactive" })
+          .eq("stripe_subscription_id", subscriptionId);
+        if (updateError) throw updateError;
+      }
+
+      await syncClientAccess(purchase.user_id);
+      console.log(
+        "Subscription invoice refund processed:",
+        invoiceId,
+        subscriptionId,
+        stillEntitled ? "access retained" : "access inactive"
+      );
+      return;
+    }
+  }
+
+  // One-off purchases are matched directly using their PaymentIntent.
   const paymentIntentId =
     typeof charge.payment_intent === "string"
       ? charge.payment_intent
@@ -108,13 +158,8 @@ async function handleRefund(charge: Stripe.Charge) {
     .maybeSingle();
 
   if (lookupError) throw lookupError;
-
   if (!purchase) {
-    // Throw so Stripe retries if the checkout event has not
-    // yet created the purchase row.
-    throw new Error(
-      `No purchase found for refunded PaymentIntent ${paymentIntentId}`
-    );
+    throw new Error(`No purchase found for refunded PaymentIntent ${paymentIntentId}`);
   }
 
   const { error: updateError } = await supabase
@@ -125,9 +170,8 @@ async function handleRefund(charge: Stripe.Charge) {
   if (updateError) throw updateError;
 
   await syncClientAccess(purchase.user_id);
-  console.log("Full refund recorded:", paymentIntentId);
+  console.log("Full one-off refund recorded:", paymentIntentId);
 }
-
 Deno.serve(async (req) => {
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
