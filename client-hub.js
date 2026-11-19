@@ -991,11 +991,11 @@ dialog?.addEventListener("click",event=>{if(event.target===dialog) dialog.close(
   const recipeList=panel.querySelector(".admin-list-wrap:not(.checkin-admin-wrap):not(.progress-review-admin-wrap):not(.programme-readiness-wrap):not(.client-retention-admin-wrap):not(.onboarding-admin-wrap)");
   const groups=[
     {title:"Recipes & resources",nodes:[recipeForm,recipeList]},
-    {title:"Weekly client check-ins",selector:".checkin-admin-wrap"},
-    {title:"Four-week progress reviews",selector:".progress-review-admin-wrap"},
-    {title:"Programme preparation",selector:".programme-readiness-wrap"},
-    {title:"Client questionnaires",selector:".onboarding-admin-wrap"},
-    {title:"Coaching end dates & data retention",selector:".client-retention-admin-wrap"}
+    {title:"View weekly client check-ins",selector:".checkin-admin-wrap"},
+    {title:"View four-week progress reviews",selector:".progress-review-admin-wrap"},
+    {title:"View programme preparation",selector:".programme-readiness-wrap"},
+    {title:"View client questionnaires",selector:".onboarding-admin-wrap"},
+    {title:"View coaching end dates & data retention",selector:".client-retention-admin-wrap"}
   ];
   groups.forEach((group,index)=>{
     const nodes=group.nodes||[panel.querySelector(group.selector)].filter(Boolean);
@@ -1007,7 +1007,7 @@ dialog?.addEventListener("click",event=>{if(event.target===dialog) dialog.close(
     summary.textContent=group.title;
     const hint=document.createElement("span");
     hint.className="admin-tool-hint";
-    hint.textContent=index===0?"Add or edit your recipe collection":"Open to view and manage";
+    hint.textContent=index===0?"Click to expand":"Click to expand and view";
     summary.append(hint);
     details.append(summary);
     nodes.filter(Boolean).forEach(node=>details.append(node));
