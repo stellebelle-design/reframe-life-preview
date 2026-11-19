@@ -827,6 +827,20 @@ dialog?.addEventListener("click",event=>{if(event.target===dialog) dialog.close(
  show("home");
 })();
 
+/* Admin display names: keep UUIDs as database keys, but show people-friendly names in admin tools. */
+window.reframeGetClientNames = async function(userIds){
+  const client=window.reframeSupabaseClient;
+  const ids=[...new Set((userIds||[]).filter(Boolean))];
+  const result=new Map();
+  if(!client||!ids.length)return result;
+  const {data,error}=await client.from('client_onboarding').select('user_id,responses,submitted_at').in('user_id',ids).order('submitted_at',{ascending:false});
+  if(error)throw error;
+  (data||[]).forEach(item=>{if(!result.has(item.user_id)){const name=typeof item.responses?.name==='string'?item.responses.name.trim():'';result.set(item.user_id,name||'Client');}});
+  ids.forEach(id=>{if(!result.has(id))result.set(id,'Client');});
+  const counts=new Map();result.forEach(name=>counts.set(name,(counts.get(name)||0)+1));
+  result.forEach((name,id)=>{if(counts.get(name)>1)result.set(id,name+' · #'+id.slice(-6));});
+  return result;
+};
 /* Admin-only coaching end dates for the six-month retention process. */
 (function initialiseClientRetentionAdmin(){
   const client=window.reframeSupabaseClient;
@@ -857,10 +871,7 @@ dialog?.addEventListener("click",event=>{if(event.target===dialog) dialog.close(
         status.textContent="No client accounts found yet.";
         return;
       }
-      const names=new Map();
-      (forms||[]).forEach(item=>{
-        if(item.user_id&&!names.has(item.user_id)&&item.responses?.name)names.set(item.user_id,item.responses.name);
-      });
+      const names=await window.reframeGetClientNames([...clients.keys()]);
       const dates=new Map((retentionRows||[]).map(item=>[item.user_id,item.coaching_ended_at]));
       status.textContent=clients.size+" client account"+(clients.size===1?"":"s")+" found. Only record a date once coaching has actually ended.";
 
@@ -868,7 +879,7 @@ dialog?.addEventListener("click",event=>{if(event.target===dialog) dialog.close(
         const row=document.createElement("article");row.className="onboarding-submission";
         const details=document.createElement("div");details.className="submission-details";
         const heading=document.createElement("strong");heading.textContent=names.get(item.user_id)||"Client";
-        const meta=document.createElement("small");meta.textContent="Access status: "+item.status+" · Account ID: "+item.user_id;
+        const meta=document.createElement("small");meta.textContent="Access status: "+item.status;
         const label=document.createElement("label");label.className="submission-answer";
         const title=document.createElement("strong");title.textContent="Actual coaching end date";
         const input=document.createElement("input");input.type="date";
@@ -932,6 +943,7 @@ dialog?.addEventListener("click",event=>{if(event.target===dialog) dialog.close(
       const active=new Set((access||[]).filter(x=>x.status==="active").map(x=>x.user_id));
       const visible=forms.filter(x=>active.has(x.user_id));
       if(!visible.length){status.textContent="No submitted questionnaires for active client accounts.";return;}
+      const displayNames=await window.reframeGetClientNames(ids);
       status.textContent=visible.length+" submitted programme"+(visible.length===1?"":"s")+" to review.";
       for(const item of visible){
         const {data:ready,error:readyError}=await client.from("client_programme_readiness")
@@ -939,7 +951,7 @@ dialog?.addEventListener("click",event=>{if(event.target===dialog) dialog.close(
         if(readyError)throw readyError;
         const row=document.createElement("article");row.className="onboarding-submission";
         const details=document.createElement("div");details.className="submission-details";
-        const heading=document.createElement("strong");heading.textContent=item.responses?.name||"Client";
+        const heading=document.createElement("strong");heading.textContent=displayNames.get(item.user_id)||item.responses?.name||"Client";
         const packageName=document.createElement("p");packageName.textContent=labels[item.product_key]||"Reframe Life programme";
         const submitted=document.createElement("small");submitted.textContent="Questionnaire submitted "+new Date(item.submitted_at).toLocaleDateString("en-GB");
         const {data:schedule,error:scheduleError}=await client.from("client_programme_schedules").select("programme_start_date").eq("user_id",item.user_id).maybeSingle();
