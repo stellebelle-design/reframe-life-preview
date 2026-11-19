@@ -309,7 +309,7 @@
   const originalLoad=window.loadAdminOnboarding;
   if(typeof originalLoad!=="function")return;
   // The questionnaire loader adds a builder control to each expanded submission.
-  const observer=new MutationObserver(()=>{
+  const attachBuilders=()=>{
     root.querySelectorAll(".onboarding-submission").forEach(details=>{
       const body=details.querySelector(".submission-details");
       if(!body||body.querySelector(".programme-builder-launch"))return;
@@ -323,7 +323,7 @@
         button.disabled=true;button.textContent="Opening programme builder…";
         try{
           const {data:item,error}=await itemPromise;if(error)throw error;if(!item)throw new Error("Questionnaire not found");
-          const existing=body.querySelector(".programme-builder");if(existing){existing.scrollIntoView({behavior:"smooth",block:"start"});return;}
+          const existing=body.querySelector(".programme-builder");if(existing){existing.scrollIntoView({behavior:"smooth",block:"start"});button.textContent="Programme builder opened";return;}
           const clientName=details.querySelector("summary small")?.textContent?.split(" · ")[0]||"Client";
           const packageName=details.querySelector("summary strong")?.textContent||"Reframe Life programme";
           buildEditor(item,body,clientName,packageName);
@@ -332,6 +332,8 @@
       });
       body.append(button,message);
     });
-  });
+  };
+  const observer=new MutationObserver(attachBuilders);
   observer.observe(root,{childList:true,subtree:true});
+  attachBuilders();
 })();
