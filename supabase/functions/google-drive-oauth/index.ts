@@ -43,6 +43,12 @@ Deno.serve(async (req) => {
     let body: { action?: string } = {};
     try { body = await req.json(); } catch { /* OAuth start may send an empty body. */ }
 
+    if (body.action === "connection-status") {
+      const { data: connection, error } = await admin.from("google_drive_connections").select("connected_at").eq("id", 1).maybeSingle();
+      if (error) return reply("Could not check Google Drive connection.", 500);
+      return json({ connected: !!connection?.connected_at });
+    }
+
     if (body.action === "picker-token") {
       if (!GOOGLE_PICKER_API_KEY || !GOOGLE_CLOUD_PROJECT_NUMBER) {
         return reply("Google Picker settings are not configured yet.", 503);
