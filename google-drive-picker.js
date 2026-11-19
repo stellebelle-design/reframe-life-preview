@@ -43,8 +43,8 @@
     }
     async function checkConnection() {
       try {
-        const { data } = await client.from("google_drive_connections").select("connected_at").eq("id", 1).maybeSingle();
-        const connected = !!data?.connected_at;
+        const data = await invoke({ action: "connection-status" });
+        const connected = !!data?.connected;
         choose.disabled = !connected;
         connect.textContent = connected ? "Reconnect Google Drive" : "Connect Google Drive";
         if (connected) status.textContent = "Google Drive is connected. Choose your master spreadsheet when you're ready.";
