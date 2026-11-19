@@ -367,16 +367,28 @@
     const { data: adminRecord } = await client.from("admin_users").select("user_id").eq("user_id", session.user.id).maybeSingle();
     if (adminPanel) adminPanel.hidden = true; // Navigation controls when the private admin view is shown.
     const adminNav=document.querySelector("#sidebarAdmin"); if(adminNav)adminNav.hidden=!adminRecord;
-    // Make the progress destination available immediately after authentication.
-    // Review retrieval happens independently and can show its own empty/error state.
-    const progressSection=document.querySelector("#my-progress");
-    if(progressSection)progressSection.hidden=false;
-    const progressNav=document.querySelector("#sidebarProgress");
-    if(progressNav)progressNav.hidden=false;
-    await loadClientDashboard(session.user.id);
-    await loadClientCheckins(session.user.id);
-    const progressNavAfterCheckins=document.querySelector("#sidebarProgress"); if(progressNavAfterCheckins)progressNavAfterCheckins.hidden=document.querySelector("#my-progress")?.hidden ?? true;
-    await loadClientProgressReviews(session.user.id);
+
+    if (adminRecord) {
+      // Keep the admin account focused on running the business, not the client experience.
+      document.body.classList.add("hub-admin-mode");
+      ["[data-section='home']","#sidebarProgress",".sidebar-nav a[href='onboarding.html']",
+       ".sidebar-view-switch"].forEach(selector=>{
+        document.querySelectorAll(selector).forEach(item=>item.hidden=true);
+      });
+      if (adminPanel) adminPanel.hidden=false;
+      if (window.showClientHubSection) window.showClientHubSection("adminPanel");
+    } else {
+      // Client-only dashboard, questionnaire and progress tools stay on client accounts.
+      const progressSection=document.querySelector("#my-progress");
+      if(progressSection)progressSection.hidden=false;
+      const progressNav=document.querySelector("#sidebarProgress");
+      if(progressNav)progressNav.hidden=false;
+      await loadClientDashboard(session.user.id);
+      await loadClientCheckins(session.user.id);
+      const progressNavAfterCheckins=document.querySelector("#sidebarProgress");
+      if(progressNavAfterCheckins)progressNavAfterCheckins.hidden=document.querySelector("#my-progress")?.hidden ?? true;
+      await loadClientProgressReviews(session.user.id);
+    }
     await loadPublishedRecipes({ isAdmin: !!adminRecord, userId: session.user.id });
     if (adminRecord && window.loadAdminRecipes) await window.loadAdminRecipes();
     if (adminRecord && window.loadAdminOnboarding) await window.loadAdminOnboarding();
