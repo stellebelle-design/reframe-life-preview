@@ -835,10 +835,8 @@ window.reframeGetClientNames = async function(userIds){
   if(!client||!ids.length)return result;
   const {data,error}=await client.from('client_onboarding').select('user_id,responses,submitted_at').in('user_id',ids).order('submitted_at',{ascending:false});
   if(error)throw error;
-  (data||[]).forEach(item=>{if(!result.has(item.user_id)){const name=typeof item.responses?.name==='string'?item.responses.name.trim():'';result.set(item.user_id,name||'Client');}});
+  (data||[]).forEach(item=>{if(!result.has(item.user_id)){const name=typeof item.responses?.full_name==='string'&&item.responses.full_name.trim()?item.responses.full_name.trim():(typeof item.responses?.name==='string'?item.responses.name.trim():'');result.set(item.user_id,name||'Client');}});
   ids.forEach(id=>{if(!result.has(id))result.set(id,'Client');});
-  const counts=new Map();result.forEach(name=>counts.set(name,(counts.get(name)||0)+1));
-  result.forEach((name,id)=>{if(counts.get(name)>1)result.set(id,name+' · #'+id.slice(-6));});
   return result;
 };
 /* Admin-only coaching end dates for the six-month retention process. */
