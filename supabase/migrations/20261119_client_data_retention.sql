@@ -7,8 +7,7 @@ create table if not exists public.client_retention_schedule (
   user_id uuid primary key references auth.users(id) on delete cascade,
   coaching_ended_at timestamptz not null,
   recorded_at timestamptz not null default now(),
-  recorded_by uuid references auth.users(id) on delete set null,
-  constraint client_retention_end_not_future check (coaching_ended_at <= now())
+  recorded_by uuid references auth.users(id) on delete set null
 );
 
 alter table public.client_retention_schedule enable row level security;
