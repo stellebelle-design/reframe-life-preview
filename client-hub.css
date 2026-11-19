@@ -419,3 +419,22 @@
   .admin-panel{padding:26px 0 0}
   .admin-tool-group>summary{padding:16px 17px;min-height:68px}
 }
+
+/* In-site client programme builder */
+.programme-builder{margin-top:22px;padding:22px;background:var(--cream);border:1px solid var(--line)}
+.programme-builder-heading h4{font:500 1.45rem var(--serif);margin:0}
+.programme-builder-heading p{font-size:.8rem;color:var(--ink-soft);margin:5px 0 0}
+.programme-builder-client{font-size:.72rem;color:var(--sage);letter-spacing:.04em;margin:12px 0 20px}
+.programme-builder-form{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.programme-builder-form>label{display:flex;flex-direction:column;gap:6px;font-size:.72rem;color:var(--ink-soft)}
+.programme-builder-wide{grid-column:1/-1}
+.programme-builder-form textarea,.programme-builder-form input{width:100%;padding:11px;border:1px solid var(--line);background:var(--white);color:var(--ink);font:400 .84rem var(--sans);resize:vertical}
+.programme-builder-form fieldset{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0;padding:16px;border:1px solid var(--line);background:var(--white)}
+.programme-builder-form legend{padding:0 7px;font:500 1.1rem var(--serif)}
+.programme-builder-form fieldset>label{display:flex;flex-direction:column;gap:6px;font-size:.72rem;color:var(--ink-soft)}
+.programme-builder-form fieldset>label:nth-of-type(2),.programme-builder-form fieldset>label:nth-of-type(3){grid-column:1/-1}
+.programme-builder-form h5{grid-column:1/-1;font:500 1.25rem var(--serif);margin:10px 0 0}
+.programme-builder-actions{grid-column:1/-1;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.programme-builder-saved{font-size:.68rem;color:var(--ink-soft)}
+.programme-builder-launch{margin-top:18px}
+@media(max-width:600px){.programme-builder{padding:16px}.programme-builder-form,.programme-builder-form fieldset{grid-template-columns:1fr}.programme-builder-form fieldset>label{grid-column:1!important}.programme-builder-form>label{grid-column:1}.programme-builder-actions{align-items:flex-start;flex-direction:column}}
