@@ -384,3 +384,38 @@
   .admin-tool-group[open]>form,
   .admin-tool-group[open]>.admin-list-wrap{padding:16px}
 }
+
+
+/* Admin workspace: remove the enclosing panel so each tool reads as its own card. */
+.admin-panel{
+  background:transparent;
+  border:0;
+  padding:34px 0 0;
+}
+.admin-panel .admin-heading{
+  padding:0 2px;
+  margin-bottom:30px;
+}
+.admin-tool-group{
+  width:100%;
+  background:#eee7da;
+  border:1px solid rgba(156,141,116,.28);
+  border-radius:16px;
+  margin:0 0 16px;
+}
+.admin-tool-group>summary{
+  min-height:78px;
+  padding:20px 24px;
+  font-size:1.38rem;
+}
+.admin-tool-group .admin-list-wrap,
+.admin-tool-group .admin-form{
+  background:#fffdf9;
+}
+.admin-tool-group .admin-submissions-heading button{
+  white-space:nowrap;
+}
+@media(max-width:600px){
+  .admin-panel{padding:26px 0 0}
+  .admin-tool-group>summary{padding:16px 17px;min-height:68px}
+}
