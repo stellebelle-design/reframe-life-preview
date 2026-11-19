@@ -1,2 +1,5 @@
 [functions.stripe-webhook]
 verify_jwt = false
+
+[functions.purge-expired-coaching-data]
+verify_jwt = false
