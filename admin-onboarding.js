@@ -226,3 +226,112 @@
  }
  refresh?.addEventListener("click",load);window.loadAdminProgressReviews=load;
 })();
+
+
+/* Admin-only in-site programme builder, linked directly to each questionnaire. */
+(function(){
+  const client=window.reframeSupabaseClient;
+  const root=document.querySelector("#onboardingAdminList");
+  if(!client||!root)return;
+  const make=(tag,cls,text)=>{const node=document.createElement(tag);if(cls)node.className=cls;if(text!==undefined)node.textContent=text;return node;};
+  const sessions=[
+    ["session_1","Session one"],["session_2","Session two"],
+    ["session_3","Session three"],["session_4","Session four"]
+  ];
+  function field(labelText,key,value,placeholder,wide){
+    const label=make("label",wide?"programme-builder-wide":"",labelText);
+    const area=make("textarea");area.rows=key==="weekly_overview"?4:5;area.maxLength=10000;
+    area.value=value||"";area.placeholder=placeholder||"Add details here…";
+    label.append(area);return {label,area};
+  }
+  function buildEditor(item,body,clientName,packageName){
+    const panel=make("section","programme-builder");
+    const heading=make("div","programme-builder-heading");
+    heading.append(make("h4",null,"Your programme workspace"),make("p",null,"Build and save this client's programme here. Your work is kept as a private draft until you choose to share it."));
+    const identity=make("p","programme-builder-client",clientName+" · "+packageName);
+    const form=make("form","programme-builder-form");
+    const savedStatus=make("p","admin-status","Loading saved programme…");savedStatus.setAttribute("role","status");
+    const fields={};
+    const savedPromise=client.from("client_programme_builds").select("programme_data,status,updated_at").eq("onboarding_id",item.id).maybeSingle();
+    const basics=[
+      ["programme_title","Programme title","e.g. Personalised training programme"],
+      ["programme_focus","Main focus and goals","What will this programme help the client work towards?"],
+      ["weekly_overview","Weekly overview","Outline the structure of the week, rest days and overall approach."]
+    ];
+    basics.forEach(([key,label,placeholder])=>{const f=field(label,key,"",placeholder,true);fields[key]=f.area;form.append(f.label);});
+    const sessionHeading=make("h5",null,"Weekly training plan");
+    form.append(sessionHeading);
+    sessions.forEach(([key,label])=>{
+      const group=make("fieldset","programme-builder-session");
+      group.append(make("legend",null,label));
+      const title=make("label",null,"Session name / focus");
+      const titleInput=make("input");titleInput.type="text";titleInput.maxLength=120;titleInput.placeholder="e.g. Full body strength";
+      title.append(titleInput);
+      const exercises=field("Exercises, sets, reps and rest",key,"","Add one exercise per line, including sets, repetitions and rest periods.",true);
+      const notes=field("Coaching notes, cues and substitutions",key+"_notes","","Technique reminders, alternatives and adaptations.",true);
+      group.append(title,exercises.label,notes.label);
+      fields[key+"_title"]=titleInput;fields[key]=exercises.area;fields[key+"_notes"]=notes.area;
+      form.append(group);
+    });
+    const extra=field("Additional guidance and reminders","additional_notes","","Warm-ups, cool-downs, progression, equipment, lifestyle considerations or anything else the client should know.",true);
+    fields.additional_notes=extra.area;form.append(extra.label);
+    const actions=make("div","programme-builder-actions");
+    const save=make("button","admin-save","Save programme draft");save.type="submit";
+    const savedAt=make("small","programme-builder-saved","");
+    actions.append(save,savedAt);form.append(actions,savedStatus);
+    panel.append(heading,identity,form);
+    body.append(panel);
+    savedPromise.then(({data,error})=>{
+      if(error)throw error;
+      if(data?.programme_data&&typeof data.programme_data==="object"){
+        Object.entries(fields).forEach(([key,input])=>{if(data.programme_data[key]!==undefined)input.value=data.programme_data[key];});
+        savedStatus.textContent=data.status==="ready"?"Saved programme marked as ready. You can continue editing.":"Your saved programme draft has been loaded.";
+        savedAt.textContent=data.updated_at?"Last saved "+new Date(data.updated_at).toLocaleString():"";
+        save.textContent="Update programme draft";
+      }else savedStatus.textContent="Your programme template is ready. Start adding your plan below.";
+    }).catch(error=>{console.error("Could not load programme draft:",error);savedStatus.textContent="We couldn't load the saved programme. Please refresh and try again.";});
+    form.addEventListener("submit",async event=>{
+      event.preventDefault();save.disabled=true;save.textContent="Saving…";savedStatus.textContent="";
+      try{
+        const programmeData={};Object.entries(fields).forEach(([key,input])=>programmeData[key]=input.value.trim());
+        const payload={onboarding_id:item.id,purchase_id:item.purchase_id,user_id:item.user_id,product_key:item.product_key,programme_data:programmeData,status:"draft",updated_at:new Date().toISOString()};
+        const {error}=await client.from("client_programme_builds").upsert(payload,{onConflict:"onboarding_id"});
+        if(error)throw error;
+        savedStatus.textContent="Programme draft saved privately. You can come back and update it at any time.";
+        savedAt.textContent="Last saved just now";save.textContent="Update programme draft";
+      }catch(error){
+        console.error("Could not save programme draft:",error);
+        savedStatus.textContent="We couldn't save the programme. Please try again.";
+        save.textContent="Save programme draft";
+      }finally{save.disabled=false;}
+    });
+  }
+  const originalLoad=window.loadAdminOnboarding;
+  if(typeof originalLoad!=="function")return;
+  // The questionnaire loader adds a builder control to each expanded submission.
+  const observer=new MutationObserver(()=>{
+    root.querySelectorAll(".onboarding-submission").forEach(details=>{
+      const body=details.querySelector(".submission-details");
+      if(!body||body.querySelector(".programme-builder-launch"))return;
+      const meta=[...body.querySelectorAll(".submission-meta")].find(node=>node.textContent.startsWith("Purchase reference:"));
+      const purchaseId=meta?.textContent.replace("Purchase reference:","").trim();
+      if(!purchaseId)return;
+      const itemPromise=client.from("client_onboarding").select("id,purchase_id,user_id,product_key").eq("purchase_id",purchaseId).maybeSingle();
+      const button=make("button","admin-save programme-builder-launch","Start building their programme");button.type="button";
+      const message=make("p","admin-status","");
+      button.addEventListener("click",async()=>{
+        button.disabled=true;button.textContent="Opening programme builder…";
+        try{
+          const {data:item,error}=await itemPromise;if(error)throw error;if(!item)throw new Error("Questionnaire not found");
+          const existing=body.querySelector(".programme-builder");if(existing){existing.scrollIntoView({behavior:"smooth",block:"start"});return;}
+          const clientName=details.querySelector("summary small")?.textContent?.split(" · ")[0]||"Client";
+          const packageName=details.querySelector("summary strong")?.textContent||"Reframe Life programme";
+          buildEditor(item,body,clientName,packageName);
+          button.textContent="Programme builder opened";
+        }catch(error){console.error("Could not open programme builder:",error);message.textContent="We couldn't open the programme builder. Please refresh and try again.";button.disabled=false;button.textContent="Start building their programme";}
+      });
+      body.append(button,message);
+    });
+  });
+  observer.observe(root,{childList:true,subtree:true});
+})();
