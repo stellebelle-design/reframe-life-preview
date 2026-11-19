@@ -8,6 +8,7 @@ const GOOGLE_PICKER_API_KEY = Deno.env.get("GOOGLE_PICKER_API_KEY")!;
 const GOOGLE_CLOUD_PROJECT_NUMBER = Deno.env.get("GOOGLE_CLOUD_PROJECT_NUMBER")!;
 const REDIRECT_URI = "https://mzzujnceyspsvlbllzst.supabase.co/functions/v1/google-drive-oauth";
 const APP_RETURN_URL = "https://stellebelle-design.github.io/reframe-life-preview/client-hub.html";
+const MASTER_SPREADSHEET_ID = "1VlZr4GHE1doyQaHBl0H_wJLcoDCmGALd";
 const cors = {
   "Access-Control-Allow-Origin": "https://stellebelle-design.github.io",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -42,6 +43,60 @@ Deno.serve(async (req) => {
 
     let body: { action?: string } = {};
     try { body = await req.json(); } catch { /* OAuth start may send an empty body. */ }
+
+    if (body.action === "master-status") {
+      const { data: master, error } = await admin.from("google_drive_master_templates")
+        .select("spreadsheet_id,spreadsheet_name,tab_names,connected_at").eq("id", 1).maybeSingle();
+      if (error) return reply("Could not check the master spreadsheet.", 500);
+      return json({ configured: !!master?.spreadsheet_id, master: master || null });
+    }
+
+    if (body.action === "set-master") {
+      const { data: connection, error: connectionError } = await admin.from("google_drive_connections")
+        .select("refresh_token,access_token,access_token_expires_at").eq("id", 1).maybeSingle();
+      if (connectionError || !connection?.refresh_token) return reply("Connect Google Drive first.", 409);
+      let accessToken = connection.access_token;
+      const expiresAt = connection.access_token_expires_at ? new Date(connection.access_token_expires_at).getTime() : 0;
+      if (!accessToken || expiresAt < Date.now() + 60000) {
+        const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+          method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
+            client_id: GOOGLE_CLIENT_ID, client_secret: GOOGLE_CLIENT_SECRET,
+            refresh_token: connection.refresh_token, grant_type: "refresh_token",
+          }),
+        });
+        const tokens = await tokenResponse.json();
+        if (!tokenResponse.ok || !tokens.access_token) {
+          console.error("Google access-token refresh failed:", tokens.error || tokenResponse.status);
+          return reply("Google access needs reconnecting. Please reconnect Google Drive.", 401);
+        }
+        accessToken = tokens.access_token;
+        await admin.from("google_drive_connections").update({
+          access_token: accessToken,
+          access_token_expires_at: new Date(Date.now() + Number(tokens.expires_in || 3600) * 1000).toISOString(),
+        }).eq("id", 1);
+      }
+      const sheetResponse = await fetch(
+        "https://sheets.googleapis.com/v4/spreadsheets/" + MASTER_SPREADSHEET_ID +
+        "?fields=spreadsheetId,properties(title),sheets.properties(title)",
+        { headers: { Authorization: "Bearer " + accessToken } },
+      );
+      const sheet = await sheetResponse.json();
+      if (!sheetResponse.ok || !sheet.spreadsheetId) {
+        console.error("Master spreadsheet verification failed:", sheet.error?.message || sheetResponse.status);
+        return reply("Google connected, but it could not access the master spreadsheet. Please check that it is shared with the Google account you connected.", 403);
+      }
+      const tabNames = (sheet.sheets || []).map((item: { properties?: { title?: string } }) => item.properties?.title).filter(Boolean);
+      const { error: saveError } = await admin.from("google_drive_master_templates").upsert({
+        id: 1, spreadsheet_id: sheet.spreadsheetId, spreadsheet_name: sheet.properties?.title || "Master programme",
+        tab_names: tabNames, connected_at: new Date().toISOString(),
+      }, { onConflict: "id" });
+      if (saveError) {
+        console.error("Could not save master spreadsheet:", saveError);
+        return reply("The master spreadsheet was verified, but Reframe Life could not save its details.", 500);
+      }
+      return json({ configured: true, master: { spreadsheet_id: sheet.spreadsheetId, spreadsheet_name: sheet.properties?.title || "Master programme", tab_names: tabNames } });
+    }
 
     if (body.action === "connection-status") {
       const { data: connection, error } = await admin.from("google_drive_connections").select("connected_at").eq("id", 1).maybeSingle();
