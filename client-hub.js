@@ -37,7 +37,7 @@
     try {
       const { data, error } = await client
         .from("client_purchases")
-        .select("product_key,payment_status,created_at")
+        .select("id,product_key,payment_status,created_at")
         .eq("user_id", userId)
         .order("created_at", { ascending: false });
       if (error) throw error;
