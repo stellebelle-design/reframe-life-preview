@@ -1,4 +1,4 @@
-/* Admin-only Google Drive connection and master-template picker. */
+/* Admin-only Google Drive connection and fixed master-template setup. */
 (function () {
   const client = window.reframeSupabaseClient;
   if (!client) return;
@@ -21,7 +21,7 @@
       </div>
       <div class="admin-actions" style="display:flex;gap:10px;flex-wrap:wrap">
         <button type="button" class="admin-save" id="googleDriveConnect">Connect Google Drive</button>
-        <button type="button" class="admin-row-button" id="googleDriveChoose" disabled>Choose master spreadsheet</button>
+        <button type="button" class="admin-row-button" id="googleDriveChoose" disabled>Use my master spreadsheet</button>
       </div>
       <p id="googleDriveStatus" class="admin-status" role="status" aria-live="polite">Google Drive is not connected yet.</p>
       <div id="googleDriveSelection" class="submission-answer" hidden></div>`;
@@ -47,9 +47,21 @@
         const connected = !!data?.connected;
         choose.disabled = !connected;
         connect.textContent = connected ? "Reconnect Google Drive" : "Connect Google Drive";
-        if (connected) status.textContent = "Google Drive is connected. Choose your master spreadsheet when you're ready.";
+        if (connected) {
+          const masterData = await invoke({ action: "master-status" });
+          if (masterData?.configured && masterData.master) {
+            selection.hidden = false;
+            selection.textContent = "Master spreadsheet: " + masterData.master.spreadsheet_name +
+              " (tabs: " + (masterData.master.tab_names || []).join(", ") + ").";
+            choose.textContent = "Refresh master spreadsheet connection";
+            status.textContent = "Your master spreadsheet is connected and its details are saved securely.";
+          } else {
+            status.textContent = "Google Drive is connected. Confirm your master spreadsheet when you're ready.";
+          }
+        }
       } catch (e) {
         console.error("Could not check Google Drive connection:", e);
+        status.textContent = e.message || "We couldn't check the Google Drive connection.";
       }
     }
     connect.addEventListener("click", async () => {
@@ -65,37 +77,22 @@
       }
     });
     choose.addEventListener("click", async () => {
-      choose.disabled = true; status.textContent = "Preparing your secure file picker…";
+      choose.disabled = true;
+      status.textContent = "Checking your master spreadsheet securely…";
       try {
-        const settings = await invoke({ action: "picker-token" });
-        await loadPickerApi();
-        const view = new google.picker.DocsView(google.picker.ViewId.SPREADSHEETS)
-          .setMimeTypes("application/vnd.google-apps.spreadsheet")
-          .setSelectFolderEnabled(false);
-        const picker = new google.picker.PickerBuilder()
-          .setAppId(settings.app_id)
-          .setDeveloperKey(settings.developer_key)
-          .setOAuthToken(settings.access_token)
-          .addView(view)
-          .setOrigin(window.location.origin)
-          .setCallback(data => {
-            if (data.action === google.picker.Action.PICKED) {
-              const file = data.docs?.[0];
-              if (!file) return;
-              selection.hidden = false;
-              selection.textContent = "Selected master spreadsheet: " + file.name + " (ID: " + file.id + ").";
-              status.textContent = "Master spreadsheet selected. The next step is enabling creation of private client copies.";
-              window.reframeGoogleMasterSpreadsheet = { id: file.id, name: file.name };
-            } else if (data.action === google.picker.Action.CANCEL) {
-              status.textContent = "No spreadsheet selected. You can choose it whenever you're ready.";
-            }
-          })
-          .build();
-        picker.setVisible(true);
+        const data = await invoke({ action: "set-master" });
+        if (!data?.configured || !data.master) throw new Error("The master spreadsheet could not be confirmed.");
+        selection.hidden = false;
+        selection.textContent = "Master spreadsheet: " + data.master.spreadsheet_name +
+          " (tabs: " + (data.master.tab_names || []).join(", ") + ").";
+        choose.textContent = "Refresh master spreadsheet connection";
+        status.textContent = "Your master spreadsheet is connected and its details are saved securely.";
       } catch (e) {
-        console.error("Google Picker could not open:", e);
-        status.textContent = e.message || "We couldn't open Google Picker. Check the Google API settings and try again.";
-      } finally { choose.disabled = false; }
+        console.error("Could not set master spreadsheet:", e);
+        status.textContent = e.message || "We couldn't connect the master spreadsheet.";
+      } finally {
+        choose.disabled = false;
+      }
     });
     checkConnection();
   }
