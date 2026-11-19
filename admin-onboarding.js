@@ -32,13 +32,14 @@
         .order("submitted_at",{ascending:false});
       if(error)throw error;
       if(!data?.length){status.textContent="No client questionnaires have been submitted yet.";return;}
+      const clientNames=await window.reframeGetClientNames(data.map(item=>item.user_id));
       status.textContent=data.length+" questionnaire submission"+(data.length===1?"":"s")+" found.";
       data.forEach(item=>{
         const details=document.createElement("details");details.className="onboarding-submission";
         const summary=document.createElement("summary");
         const info=document.createElement("div");
         const title=document.createElement("strong");title.textContent=names[item.product_key]||"Client questionnaire";
-        const person=document.createElement("small");person.textContent=(item.responses?.name||"Client")+
+        const person=document.createElement("small");person.textContent=(clientNames.get(item.user_id)||item.responses?.name||"Client")+
           " · "+new Date(item.submitted_at).toLocaleString();
         info.append(title,person);
         const tag=document.createElement("small");tag.textContent="VIEW RESPONSES";
@@ -58,7 +59,7 @@
           :"No health-information consent recorded.";
         health.append(healthTitle,healthText,consent);body.append(health);
         const meta=document.createElement("p");meta.className="submission-meta";
-        meta.textContent="Client account ID: "+item.user_id+" · Purchase reference: "+item.purchase_id;
+        meta.textContent="Purchase reference: "+item.purchase_id;
         body.append(meta);details.append(body);list.append(details);
       });
     }catch(error){
@@ -86,6 +87,7 @@
         .order("week_start",{ascending:false}).limit(100);
       if(error)throw error;
       if(!data?.length){status.textContent="No weekly check-ins have been submitted yet.";return;}
+      const clientNames=await window.reframeGetClientNames(data.map(item=>item.user_id));
       status.textContent=data.length+" check-in"+(data.length===1?"":"s")+" found.";
       data.forEach(item=>{
         const details=document.createElement("details");details.className="onboarding-submission";
@@ -94,7 +96,7 @@
         const title=document.createElement("strong");
         const date=new Date(item.week_start+"T12:00:00");
         title.textContent="Week commencing "+date.toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
-        const person=document.createElement("small");person.textContent="Client account: "+item.user_id;
+        const person=document.createElement("small");person.textContent=clientNames.get(item.user_id)||"Client";
         info.append(title,person);
         const tag=document.createElement("small");tag.textContent="VIEW CHECK-IN";
         summary.append(info,tag);details.append(summary);
@@ -166,9 +168,10 @@
    if(reflectionError)throw reflectionError;
    const ids=[...new Set([...checkins.map(x=>x.user_id),...(accessRows||[]).map(x=>x.user_id),...(reviewRows||[]).map(x=>x.user_id),...(scheduleRows||[]).map(x=>x.user_id)].filter(Boolean))];
    if(!ids.length){status.textContent="No client accounts found yet.";return;}
+   const clientNames=await window.reframeGetClientNames(ids);
    status.textContent=ids.length+" client account"+(ids.length===1?"":"s")+" available.";
    const controls=make("div","progress-review-controls");const clientLabel=make("label",null,"Choose client");const select=make("select");
-   ids.forEach(id=>{const option=make("option",null,"Client account · "+id);option.value=id;select.append(option);});clientLabel.append(select);
+   ids.forEach(id=>{const option=make("option",null,clientNames.get(id)||"Client");option.value=id;select.append(option);});clientLabel.append(select);
    const periodLabel=make("label",null,"Review period starts");const start=make("input");start.type="date";periodLabel.append(start);controls.append(clientLabel,periodLabel);root.append(controls);
    const panel=make("div");root.append(panel);
    function defaultStart(uid){
