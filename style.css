@@ -540,3 +540,97 @@ a:focus-visible, button:focus-visible {
 @media (max-width: 860px) {
   .nav-buy-link { display: inline-block; width: fit-content; }
 }
+
+
+/* MOBILE HOMEPAGE REFINEMENTS — November 2026 */
+@media (max-width: 600px) {
+  :root { --pad: 24px; }
+
+  .nav {
+    padding: 17px var(--pad);
+  }
+  .nav.scrolled {
+    padding-top: 14px;
+    padding-bottom: 14px;
+  }
+  .nav-logo { font-size: 1.22rem; }
+  .nav-links.open {
+    padding: 22px var(--pad) 28px;
+    gap: 18px;
+    max-height: calc(100svh - 64px);
+    overflow-y: auto;
+  }
+  .nav-links.open a {
+    width: fit-content;
+    font-size: .78rem;
+  }
+
+  .hero {
+    min-height: 100svh;
+    padding: 112px var(--pad) 76px;
+  }
+  .hero-inner { width: 100%; }
+  .hero h1 {
+    font-size: clamp(2.35rem, 10vw, 3.15rem);
+    line-height: 1.08;
+  }
+  .hero-sub {
+    margin-top: 22px;
+    font-size: .98rem;
+    line-height: 1.65;
+  }
+  .hero-actions {
+    margin-top: 30px;
+    gap: 12px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .hero-actions .btn {
+    width: 100%;
+    text-align: center;
+    padding: 15px 18px;
+  }
+
+  .about,
+  .services,
+  .experience {
+    padding-top: 88px;
+    padding-bottom: 88px;
+  }
+  .about-grid { gap: 42px; }
+  .about-image { width: calc(100% - 18px); }
+  .about-content p { font-size: .98rem; }
+
+  .services-head { margin-bottom: 42px; }
+  .services-grid { gap: 20px; }
+  .service-card {
+    padding: 32px 24px;
+    min-width: 0;
+  }
+  .programme-card .btn {
+    width: 100%;
+    text-align: center;
+  }
+  .programme-price { font-size: 1.85rem; }
+  .addon { margin-top: 22px; }
+  .included { margin-top: 64px; }
+
+  .experience-head { margin-bottom: 42px; }
+  .experience-steps { gap: 24px; }
+  .experience-step { grid-template-columns: 38px minmax(0, 1fr); gap: 14px; }
+
+  .contact { padding: 96px var(--pad) 76px; }
+  .contact-email {
+    max-width: 100%;
+    font-size: clamp(1.12rem, 5vw, 1.4rem);
+    overflow-wrap: anywhere;
+  }
+  .socials { gap: 20px 26px; }
+  .footer { padding: 32px var(--pad) 40px; }
+}
+
+@media (max-width: 360px) {
+  .eyebrow { font-size: .66rem; letter-spacing: .2em; }
+  .service-card { padding: 28px 20px; }
+  .experience-step { grid-template-columns: 32px minmax(0, 1fr); gap: 12px; }
+}
