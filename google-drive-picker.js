@@ -37,7 +37,22 @@
 
     async function invoke(body) {
       const { data, error } = await client.functions.invoke(endpoint, { body });
-      if (error) throw error;
+      if (error) {
+        let detail = error.message || "The secure Google Drive request failed.";
+        try {
+          const response = error.context;
+          if (response && typeof response.clone === "function") {
+            const contentType = response.headers.get("content-type") || "";
+            const payload = contentType.includes("application/json")
+              ? await response.clone().json()
+              : await response.clone().text();
+            if (typeof payload === "string" && payload.trim()) detail = payload;
+            else if (payload?.message) detail = payload.message;
+            else if (payload?.error) detail = payload.error;
+          }
+        } catch (_) { /* Keep the original error message. */ }
+        throw new Error(detail);
+      }
       if (data?.error) throw new Error(data.error);
       return data;
     }
