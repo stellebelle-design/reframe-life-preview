@@ -83,8 +83,9 @@ Deno.serve(async (req) => {
       );
       const sheet = await sheetResponse.json();
       if (!sheetResponse.ok || !sheet.spreadsheetId) {
-        console.error("Master spreadsheet verification failed:", sheet.error?.message || sheetResponse.status);
-        return reply("Google connected, but it could not access the master spreadsheet. Please check that it is shared with the Google account you connected.", 403);
+        const googleMessage = sheet.error?.message || ("HTTP " + sheetResponse.status);
+        console.error("Master spreadsheet verification failed:", sheet.error?.code, googleMessage, sheet.error?.status);
+        return reply("Google Sheets API error (" + (sheet.error?.code || sheetResponse.status) + "): " + googleMessage, 403);
       }
       const tabNames = (sheet.sheets || []).map((item: { properties?: { title?: string } }) => item.properties?.title).filter(Boolean);
       const { error: saveError } = await admin.from("google_drive_master_templates").upsert({
