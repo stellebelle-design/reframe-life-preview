@@ -383,6 +383,7 @@
     if (adminRecord && window.loadAdminCheckins) await window.loadAdminCheckins();
     if (adminRecord && window.loadAdminProgressReviews) await window.loadAdminProgressReviews();
     if (adminRecord && window.loadAdminProgrammeReadiness) await window.loadAdminProgrammeReadiness();
+    if (adminRecord && window.loadAdminClientRetention) await window.loadAdminClientRetention();
     return true;
   }
 
@@ -812,6 +813,89 @@ dialog?.addEventListener("click",event=>{if(event.target===dialog) dialog.close(
  focusedButton?.addEventListener("click",()=>setMode(false));
  window.showClientHubSection=show;
  show("home");
+})();
+
+/* Admin-only coaching end dates for the six-month retention process. */
+(function initialiseClientRetentionAdmin(){
+  const client=window.reframeSupabaseClient;
+  const root=document.querySelector("#clientRetentionAdminList");
+  const status=document.querySelector("#clientRetentionAdminMessage");
+  const refresh=document.querySelector("#refreshClientRetentionAdmin");
+  if(!client||!root||!status)return;
+
+  async function load(){
+    status.textContent="Loading client accounts and retention dates…";
+    root.replaceChildren();
+    if(refresh)refresh.disabled=true;
+    try{
+      const [{data:accessRows,error:accessError},{data:forms,error:formsError},{data:retentionRows,error:retentionError}]=await Promise.all([
+        client.from("client_access").select("user_id,status"),
+        client.from("client_onboarding").select("user_id,responses,submitted_at").order("submitted_at",{ascending:false}),
+        client.rpc("get_client_retention_schedule")
+      ]);
+      if(accessError)throw accessError;
+      if(formsError)throw formsError;
+      if(retentionError)throw retentionError;
+
+      const clients=new Map();
+      (accessRows||[]).forEach(item=>{
+        if(item.user_id&&!clients.has(item.user_id))clients.set(item.user_id,{user_id:item.user_id,status:item.status||"unknown"});
+      });
+      if(!clients.size){
+        status.textContent="No client accounts found yet.";
+        return;
+      }
+      const names=new Map();
+      (forms||[]).forEach(item=>{
+        if(item.user_id&&!names.has(item.user_id)&&item.responses?.name)names.set(item.user_id,item.responses.name);
+      });
+      const dates=new Map((retentionRows||[]).map(item=>[item.user_id,item.coaching_ended_at]));
+      status.textContent=clients.size+" client account"+(clients.size===1?"":"s")+" found. Only record a date once coaching has actually ended.";
+
+      [...clients.values()].forEach(item=>{
+        const row=document.createElement("article");row.className="onboarding-submission";
+        const details=document.createElement("div");details.className="submission-details";
+        const heading=document.createElement("strong");heading.textContent=names.get(item.user_id)||"Client";
+        const meta=document.createElement("small");meta.textContent="Access status: "+item.status+" · Account ID: "+item.user_id;
+        const label=document.createElement("label");label.className="submission-answer";
+        const title=document.createElement("strong");title.textContent="Actual coaching end date";
+        const input=document.createElement("input");input.type="date";
+        const existing=dates.get(item.user_id);
+        if(existing)input.value=String(existing).slice(0,10);
+        const button=document.createElement("button");button.type="button";button.className="admin-save";
+        button.textContent=existing?"Update end date":"Record end date";
+        const message=document.createElement("p");message.className="admin-status";message.setAttribute("role","status");
+        const note=document.createElement("small");note.textContent="The six-month retention period starts from this date. Do not enter a date for a pause or an ongoing programme.";
+        button.addEventListener("click",async()=>{
+          if(!input.value){message.textContent="Please choose the date coaching actually ended.";return;}
+          if(!window.confirm("Record "+input.value+" as the date this client's coaching ended? This starts their six-month retention period."))return;
+          button.disabled=true;message.textContent="Saving end date…";
+          try{
+            const endedAt=new Date(input.value+"T00:00:00.000Z").toISOString();
+            const {error:saveError}=await client.rpc("record_client_coaching_end",{
+              p_user_id:item.user_id,
+              p_coaching_ended_at:endedAt
+            });
+            if(saveError)throw saveError;
+            message.textContent="Coaching end date saved. The six-month retention period is now recorded.";
+            button.textContent="Update end date";
+            dates.set(item.user_id,endedAt);
+          }catch(error){
+            console.error("Could not record coaching end date:",error);
+            message.textContent="We couldn't save this date. Please check your admin access and try again.";
+          }finally{button.disabled=false;}
+        });
+        label.append(title,input);
+        details.append(heading,meta,label,note,button,message);
+        row.append(details);root.append(row);
+      });
+    }catch(error){
+      console.error("Could not load client retention dates:",error);
+      status.textContent="We couldn't load the retention panel. Please check admin access and the retention database setup.";
+    }finally{if(refresh)refresh.disabled=false;}
+  }
+  refresh?.addEventListener("click",load);
+  window.loadAdminClientRetention=load;
 })();
 
 /* Admin control for the point at which a client's personalised programme is ready. */
