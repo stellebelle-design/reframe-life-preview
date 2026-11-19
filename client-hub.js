@@ -974,3 +974,44 @@ dialog?.addEventListener("click",event=>{if(event.target===dialog) dialog.close(
   refresh?.addEventListener("click",load);
   window.loadAdminProgrammeReadiness=load;
 })();
+
+
+/* Keep the private admin workspace calm and task-focused. */
+(function organiseAdminWorkspace(){
+  const panel=document.querySelector("#adminPanel");
+  if(!panel)return;
+  const heading=panel.querySelector(".admin-heading");
+  if(heading){
+    const title=heading.querySelector("h2");
+    if(title)title.innerHTML='Your admin <em>workspace.</em>';
+    const intro=heading.querySelector(".section-intro");
+    if(intro)intro.textContent="Everything you need to look after Reframe Life, gathered into simple sections. Open only what you need.";
+  }
+  const recipeForm=panel.querySelector("#recipeAdminForm");
+  const recipeList=panel.querySelector(".admin-list-wrap:not(.checkin-admin-wrap):not(.progress-review-admin-wrap):not(.programme-readiness-wrap):not(.client-retention-admin-wrap):not(.onboarding-admin-wrap)");
+  const groups=[
+    {title:"Recipes & resources",nodes:[recipeForm,recipeList]},
+    {title:"Weekly client check-ins",selector:".checkin-admin-wrap"},
+    {title:"Four-week progress reviews",selector:".progress-review-admin-wrap"},
+    {title:"Programme preparation",selector:".programme-readiness-wrap"},
+    {title:"Client questionnaires",selector:".onboarding-admin-wrap"},
+    {title:"Coaching end dates & data retention",selector:".client-retention-admin-wrap"}
+  ];
+  groups.forEach((group,index)=>{
+    const nodes=group.nodes||[panel.querySelector(group.selector)].filter(Boolean);
+    if(!nodes.length||nodes.every(node=>!node)||nodes[0]?.closest("details.admin-tool-group"))return;
+    const details=document.createElement("details");
+    details.className="admin-tool-group";
+    details.open=false;
+    const summary=document.createElement("summary");
+    summary.textContent=group.title;
+    const hint=document.createElement("span");
+    hint.className="admin-tool-hint";
+    hint.textContent=index===0?"Add or edit your recipe collection":"Open to view and manage";
+    summary.append(hint);
+    details.append(summary);
+    nodes.filter(Boolean).forEach(node=>details.append(node));
+    const anchor=nodes.find(Boolean);
+    anchor.before(details);
+  });
+})();
