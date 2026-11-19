@@ -8,7 +8,7 @@ const GOOGLE_PICKER_API_KEY = Deno.env.get("GOOGLE_PICKER_API_KEY")!;
 const GOOGLE_CLOUD_PROJECT_NUMBER = Deno.env.get("GOOGLE_CLOUD_PROJECT_NUMBER")!;
 const REDIRECT_URI = "https://mzzujnceyspsvlbllzst.supabase.co/functions/v1/google-drive-oauth";
 const APP_RETURN_URL = "https://stellebelle-design.github.io/reframe-life-preview/client-hub.html";
-const MASTER_SPREADSHEET_ID = "1VlZr4GHE1doyQaHBl0H_wJLcoDCmGALd";
+const MASTER_SPREADSHEET_ID = "1Llt5o78wC7RX1fzu-HpWRMqLf7yU9N16NqfoI2W-gL8";
 const cors = {
   "Access-Control-Allow-Origin": "https://stellebelle-design.github.io",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
