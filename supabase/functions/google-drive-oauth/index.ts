@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
       .select("user_id").eq("user_id", userData.user.id).maybeSingle();
     if (adminError || !adminRow) return reply("Administrator access required.", 403);
 
-    let body: { action?: string } = {};
+    let body: { action?: string; onboarding_id?: string } = {};
     try { body = await req.json(); } catch { /* OAuth start may send an empty body. */ }
 
     if (body.action === "create-client-copy") {
