@@ -44,6 +44,79 @@ Deno.serve(async (req) => {
     let body: { action?: string } = {};
     try { body = await req.json(); } catch { /* OAuth start may send an empty body. */ }
 
+    if (body.action === "create-client-copy") {
+      const onboardingId = typeof body.onboarding_id === "string" ? body.onboarding_id : "";
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(onboardingId)) {
+        return reply("A valid questionnaire reference is required.", 400);
+      }
+      const { data: existing, error: existingError } = await admin.from("client_programme_copies")
+        .select("drive_file_id,drive_file_url,spreadsheet_name,created_at").eq("onboarding_id", onboardingId).maybeSingle();
+      if (existingError) return reply("Could not check whether this client already has a programme copy.", 500);
+      if (existing?.drive_file_id) {
+        return json({ created: false, existing: true, file: { id: existing.drive_file_id, name: existing.spreadsheet_name, url: existing.drive_file_url } });
+      }
+      const { data: submission, error: submissionError } = await admin.from("client_onboarding")
+        .select("id,purchase_id,user_id,product_key,responses").eq("id", onboardingId).maybeSingle();
+      if (submissionError || !submission) return reply("The client questionnaire could not be found.", 404);
+      const { data: master, error: masterError } = await admin.from("google_drive_master_templates")
+        .select("spreadsheet_id,spreadsheet_name").eq("id", 1).maybeSingle();
+      if (masterError || !master?.spreadsheet_id) return reply("Please connect your master programme spreadsheet first.", 409);
+      const { data: connection, error: connectionError } = await admin.from("google_drive_connections")
+        .select("refresh_token,access_token,access_token_expires_at").eq("id", 1).maybeSingle();
+      if (connectionError || !connection?.refresh_token) return reply("Connect Google Drive first.", 409);
+      let accessToken = connection.access_token;
+      const expiresAt = connection.access_token_expires_at ? new Date(connection.access_token_expires_at).getTime() : 0;
+      if (!accessToken || expiresAt < Date.now() + 60000) {
+        const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+          method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
+            client_id: GOOGLE_CLIENT_ID, client_secret: GOOGLE_CLIENT_SECRET,
+            refresh_token: connection.refresh_token, grant_type: "refresh_token",
+          }),
+        });
+        const tokens = await tokenResponse.json();
+        if (!tokenResponse.ok || !tokens.access_token) {
+          console.error("Google access-token refresh failed:", tokens.error || tokenResponse.status);
+          return reply("Google access needs reconnecting. Please reconnect Google Drive.", 401);
+        }
+        accessToken = tokens.access_token;
+        await admin.from("google_drive_connections").update({
+          access_token: accessToken,
+          access_token_expires_at: new Date(Date.now() + Number(tokens.expires_in || 3600) * 1000).toISOString(),
+        }).eq("id", 1);
+      }
+      const rawName = submission.responses?.name;
+      const clientName = (typeof rawName === "string" && rawName.trim()) ? rawName.trim() : "Client";
+      const safeName = clientName.replace(/[\\/:*?"<>|#%{}~&]/g, " ").replace(/\\s+/g, " ").trim().slice(0, 80) || "Client";
+      const programmeName = "Reframe Life Programme - " + safeName;
+      const copyResponse = await fetch(
+        "https://www.googleapis.com/drive/v3/files/" + master.spreadsheet_id + "/copy?fields=id,name,mimeType,webViewLink",
+        {
+          method: "POST",
+          headers: { Authorization: "Bearer " + accessToken, "Content-Type": "application/json" },
+          body: JSON.stringify({ name: programmeName }),
+        },
+      );
+      const copied = await copyResponse.json();
+      if (!copyResponse.ok || !copied.id) {
+        const googleMessage = copied.error?.message || ("HTTP " + copyResponse.status);
+        console.error("Google Drive copy failed:", copied.error?.code, googleMessage);
+        if (copyResponse.status === 403) return reply("Google Drive could not copy the template. Please reconnect Google Drive and approve file access, then try again. Google said: " + googleMessage, 403);
+        return reply("Google Drive could not create this client's programme copy: " + googleMessage, copyResponse.status || 500);
+      }
+      const fileUrl = copied.webViewLink || ("https://docs.google.com/spreadsheets/d/" + copied.id + "/edit");
+      const { error: saveCopyError } = await admin.from("client_programme_copies").insert({
+        onboarding_id: submission.id, user_id: submission.user_id, purchase_id: submission.purchase_id,
+        product_key: submission.product_key, client_name: clientName, spreadsheet_name: copied.name || programmeName,
+        drive_file_id: copied.id, drive_file_url: fileUrl, created_by: userData.user.id,
+      });
+      if (saveCopyError) {
+        console.error("Could not save client programme copy record:", saveCopyError);
+        return reply("The spreadsheet copy was created, but its client link could not be saved. Please contact support before trying again.", 500);
+      }
+      return json({ created: true, existing: false, file: { id: copied.id, name: copied.name || programmeName, url: fileUrl } });
+    }
+
     if (body.action === "master-status") {
       const { data: master, error } = await admin.from("google_drive_master_templates")
         .select("spreadsheet_id,spreadsheet_name,tab_names,connected_at").eq("id", 1).maybeSingle();
