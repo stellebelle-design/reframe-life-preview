@@ -60,7 +60,38 @@
         health.append(healthTitle,healthText,consent);body.append(health);
         const meta=document.createElement("p");meta.className="submission-meta";
         meta.textContent="Purchase reference: "+item.purchase_id;
-        body.append(meta);details.append(body);list.append(details);
+        body.append(meta);
+        const programmeActions=document.createElement("div");programmeActions.className="admin-actions";
+        programmeActions.style.cssText="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px";
+        const startProgramme=document.createElement("button");startProgramme.type="button";startProgramme.className="admin-save";
+        startProgramme.textContent="Start building their programme";
+        const programmeStatus=document.createElement("p");programmeStatus.className="admin-status";
+        programmeStatus.setAttribute("role","status");programmeStatus.setAttribute("aria-live","polite");
+        startProgramme.addEventListener("click",async()=>{
+          startProgramme.disabled=true;startProgramme.textContent="Creating client copy…";programmeStatus.textContent="";
+          try{
+            const {data:copyData,error:copyError}=await client.functions.invoke("google-drive-oauth",{body:{action:"create-client-copy",onboarding_id:item.id}});
+            if(copyError){
+              let detail=copyError.message||"The programme copy could not be created.";
+              try{const response=copyError.context;if(response&&typeof response.clone==="function"){const payload=await response.clone().text();if(payload.trim())detail=payload;}}catch(_){}
+              throw new Error(detail);
+            }
+            if(copyData?.error)throw new Error(copyData.error);
+            if(!copyData?.file?.url)throw new Error("Google created the copy but did not return its link.");
+            const link=document.createElement("a");link.href=copyData.file.url;link.target="_blank";link.rel="noopener noreferrer";
+            link.textContent="Open "+copyData.file.name;
+            programmeStatus.textContent=copyData.existing?"A programme copy already exists for this questionnaire: ":"Your client's separate programme copy is ready: ";
+            programmeStatus.append(link);
+            startProgramme.textContent="Open programme copy";
+            startProgramme.onclick=()=>window.open(copyData.file.url,"_blank","noopener");
+          }catch(error){
+            console.error("Could not create client programme copy:",error);
+            programmeStatus.textContent=error.message||"We couldn't create the client programme copy. Please try again.";
+            startProgramme.textContent="Try again";
+          }finally{startProgramme.disabled=false;}
+        });
+        programmeActions.append(startProgramme,programmeStatus);body.append(programmeActions);
+        details.append(body);list.append(details);
       });
     }catch(error){
       console.error("Could not load client questionnaires:",error);
