@@ -1086,7 +1086,9 @@ window.reframeGetClientNames = async function(userIds){
         const heading=document.createElement("strong");heading.textContent=displayNames.get(item.user_id)||item.responses?.name||"Client";
         const packageName=document.createElement("span");packageName.textContent=labels[item.product_key]||"Reframe Life programme";
         const submitted=document.createElement("small");submitted.textContent="Questionnaire submitted "+new Date(item.submitted_at).toLocaleDateString("en-GB");
-        const hint=document.createElement("small");hint.textContent="OPEN CLIENT";
+        const hint=document.createElement("small");hint.className="programme-status-badge";
+        hint.textContent=ready?.is_ready?"READY — SHARED":"AWAITING PROGRAMME";
+        hint.dataset.state=ready?.is_ready?"ready":"pending";
         summary.append(heading,packageName,submitted,hint);
         const details=document.createElement("div");details.className="submission-details";
         const {data:schedule,error:scheduleError}=await client.from("client_programme_schedules").select("programme_start_date").eq("user_id",item.user_id).maybeSingle();
@@ -1169,6 +1171,8 @@ window.reframeGetClientNames = async function(userIds){
             if(!savedReady || savedReady.user_id!==item.user_id || savedReady.is_ready!==checkbox.checked){
               throw new Error("The database did not confirm the readiness change. Please refresh and try again.");
             }
+            hint.textContent=checkbox.checked?"READY — SHARED":"AWAITING PROGRAMME";
+            hint.dataset.state=checkbox.checked?"ready":"pending";
             message.textContent=checkbox.checked?"Saved and verified. The client will now see their encouragement message.":"Saved and verified. The programme is marked as not yet ready.";
           }catch(error){console.error("Could not update programme readiness:",error);checkbox.checked=!checkbox.checked;message.textContent="We couldn't save that change. Please try again.";}
           finally{checkbox.disabled=false;}
