@@ -201,6 +201,45 @@
    if(!ids.length){status.textContent="No client accounts found yet.";return;}
    const clientNames=await window.reframeGetClientNames(ids);
    status.textContent=ids.length+" client account"+(ids.length===1?"":"s")+" available.";
+
+   // At-a-glance review queue for active clients.
+   const queue=make("section","progress-review-queue");
+   queue.append(make("h3",null,"Review schedule"));
+   const today=dateOnly(new Date());
+   const queueRows=ids.map(uid=>{
+    const programmeStart=(scheduleRows||[]).find(x=>x.user_id===uid)?.programme_start_date||"";
+    const clientReviews=(reviewRows||[]).filter(x=>x.user_id===uid&&(!programmeStart||x.period_start>=programmeStart)).sort((a,b)=>b.period_start.localeCompare(a.period_start));
+    const latest=clientReviews[0];
+    const nextStart=latest?.period_end ? (()=>{const d=new Date(latest.period_end+"T12:00:00");d.setDate(d.getDate()+1);return dateOnly(d);})() : programmeStart;
+    if(!programmeStart)return {uid,name:clientNames.get(uid)||"Client",state:"needs-date",label:"START DATE NEEDED",detail:"Add their actual programme start date before scheduling reviews."};
+    const end=new Date(nextStart+"T12:00:00");end.setDate(end.getDate()+27);while(end.getDay()!==0)end.setDate(end.getDate()+1);
+    const periodEnd=dateOnly(end);
+    const periodCheckins=checkins.filter(x=>x.user_id===uid&&x.week_start>=nextStart&&x.week_start<=periodEnd);
+    if(today<periodEnd)return {uid,name:clientNames.get(uid)||"Client",state:"upcoming",label:"UPCOMING",detail:"Next review period ends "+displayDate(periodEnd)+"."};
+    if(periodCheckins.length)return {uid,name:clientNames.get(uid)||"Client",state:"awaiting",label:"AWAITING YOUR REVIEW",detail:periodCheckins.length+" weekly check-in"+(periodCheckins.length===1?"":"s")+" received for this period."};
+    return {uid,name:clientNames.get(uid)||"Client",state:"due",label:"REVIEW DUE",detail:"The four-week period ended "+displayDate(periodEnd)+". No weekly check-ins were found."};
+   });
+   const priority={awaiting:0,due:1,"needs-date":2,upcoming:3};
+   queueRows.sort((a,b)=>priority[a.state]-priority[b.state]||a.name.localeCompare(b.name));
+   queueRows.forEach(item=>{
+    const row=make("div","progress-review-queue-row");
+    const info=make("div","progress-review-queue-info");
+    info.append(make("strong",null,item.name),make("small",null,item.detail));
+    const badge=make("span","progress-review-queue-badge",item.label);badge.dataset.state=item.state;
+    const open=make("button","admin-row-button","Open review");open.type="button";
+    open.addEventListener("click",()=>{
+     select.value=item.uid;
+     const schedule=(scheduleRows||[]).find(x=>x.user_id===item.uid);
+     const latest=(reviewRows||[]).filter(x=>x.user_id===item.uid&&(!schedule?.programme_start_date||x.period_start>=schedule.programme_start_date)).sort((a,b)=>b.period_start.localeCompare(a.period_start))[0];
+     const next=latest?.period_end?new Date(latest.period_end+"T12:00:00"):null;
+     if(next){next.setDate(next.getDate()+1);start.value=dateOnly(next);}else start.value=schedule?.programme_start_date||"";
+     showClient().catch(error=>{console.error(error);status.textContent="Couldn’t load this client’s review.";});
+     root.scrollIntoView({behavior:"smooth",block:"start"});
+    });
+    row.append(info,badge,open);queue.append(row);
+   });
+   root.append(queue);
+
    const controls=make("div","progress-review-controls");const clientLabel=make("label",null,"Choose client");const select=make("select");
    ids.forEach(id=>{const option=make("option",null,clientNames.get(id)||"Client");option.value=id;select.append(option);});clientLabel.append(select);
    const periodLabel=make("label",null,"Review period starts");const start=make("input");start.type="date";periodLabel.append(start);controls.append(clientLabel,periodLabel);root.append(controls);
