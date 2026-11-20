@@ -258,7 +258,7 @@
       form.addEventListener("submit", async event => {
         event.preventDefault();
         if (hasSubmittedThisWeek) {
-          if (message) message.textContent = "You've already submitted your check-in for this week. Your next check-in will be available from next Monday.";
+          if (message) message.textContent = "You've already submitted your check-in for this week. Your next check-in will be available next Sunday.";
           return;
         }
         const submit=document.querySelector("#checkinSubmit");
@@ -278,7 +278,7 @@
           const {error}=await client.from("client_checkins").upsert(payload,{onConflict:"user_id,week_start"});
           if(error) throw error;
           setCheckinAvailability(true);
-          if(message) message.textContent="Your check-in has been saved. Thank you for taking a moment for yourself. Your next check-in will be available from next Monday.";
+          if(message) message.textContent="Your check-in has been saved. Thank you for taking a moment for yourself. Your next check-in will be available next Sunday.";
           await refreshHistory();
         } catch(error) {
           console.error("Could not save client check-in:",error);
@@ -308,9 +308,12 @@
       const {data:reflections,error:reflectionError}=await client.from("client_progress_reflections").select("period_start,what_went_well,proud_of,challenging,next_focus,updated_at").eq("user_id",userId);if(reflectionError)throw reflectionError;
       const {data:schedule,error:scheduleError}=await client.from("client_programme_schedules").select("programme_start_date").eq("user_id",userId).maybeSingle();if(scheduleError)throw scheduleError;
       const now=new Date(),today=[now.getFullYear(),String(now.getMonth()+1).padStart(2,"0"),String(now.getDate()).padStart(2,"0")].join("-"),isSunday=now.getDay()===0;
-      const byPeriod=new Map((reflections||[]).map(x=>[x.period_start,x]));list.replaceChildren();
-      if(!reviews?.length){list.textContent="Your four-week reviews will appear here when your coach shares them.";return;}
-      reviews.forEach(r=>{
+      const programmeStart=schedule?.programme_start_date||"";
+      const visibleReviews=(reviews||[]).filter(r=>!programmeStart||r.period_start>=programmeStart);
+      const visibleReflections=(reflections||[]).filter(r=>!programmeStart||r.period_start>=programmeStart);
+      const byPeriod=new Map(visibleReflections.map(x=>[x.period_start,x]));list.replaceChildren();
+      if(!visibleReviews.length){list.textContent="Your four-week reviews will appear here when your coach shares them.";return;}
+      visibleReviews.forEach(r=>{
         const reflection=byPeriod.get(r.period_start)||{};
         const isDue=isSunday && !!schedule?.programme_start_date && today>=r.period_end && today>=schedule.programme_start_date;
         if(!isDue && !reflection.updated_at)return;
