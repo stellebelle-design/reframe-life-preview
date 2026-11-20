@@ -950,8 +950,12 @@ window.reframeGetClientNames = async function(userIds){
       const names=await window.reframeGetClientNames(ids);
       status.textContent=ids.length+" active six-month coaching client"+(ids.length===1?"":"s")+".";
       for(const userId of ids){
-        const form=latestForms.get(userId),schedule=scheduleByUser.get(userId),clientReviews=reviewsByUser.get(userId)||[];
+        const form=latestForms.get(userId),schedule=scheduleByUser.get(userId),allClientReviews=reviewsByUser.get(userId)||[];
         const start=schedule?.programme_start_date||null;
+        // A review belongs to this coaching programme only when its period starts
+        // on or after the recorded programme start date. This excludes test or
+        // pre-programme reviews from the live six-month timeline.
+        const clientReviews=start?allClientReviews.filter(review=>review.period_start>=start):allClientReviews;
         const end=start?dateString(addMonths(start,6)):null;
         const card=document.createElement("article");card.className="onboarding-submission coaching-overview-card";
         const details=document.createElement("div");details.className="submission-details";
@@ -964,11 +968,13 @@ window.reframeGetClientNames = async function(userIds){
         addStat("Progress reviews completed",String(clientReviews.length));
         let nextReview="Set a start date first";
         if(start){
-          const first=new Date(start+"T12:00:00");first.setDate(first.getDate()+27);
-          while(first.getDay()!==0)first.setDate(first.getDate()+1);
-          const today=new Date();today.setHours(12,0,0,0);
-          while(first<today)first.setDate(first.getDate()+28);
-          nextReview=first.toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
+          // Use UTC date-only arithmetic so the Sunday milestone cannot shift
+          // by a day because of the browser's local timezone.
+          const first=new Date(start+"T00:00:00Z");first.setUTCDate(first.getUTCDate()+27);
+          while(first.getUTCDay()!==0)first.setUTCDate(first.getUTCDate()+1);
+          const now=new Date(),today=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate()));
+          while(first<today)first.setUTCDate(first.getUTCDate()+28);
+          nextReview=first.toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric",timeZone:"UTC"});
         }
         addStat("Next four-week review milestone",nextReview);
         details.append(heading,packageLine,grid);
