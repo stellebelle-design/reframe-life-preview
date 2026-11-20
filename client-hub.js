@@ -42,6 +42,19 @@
         .order("created_at", { ascending: false });
       if (error) throw error;
       const latestPurchase = (data || [])[0];
+      const now = Date.now();
+      const durations = {
+        coaching_4_week: 4 * 7 * 24 * 60 * 60 * 1000,
+        coaching_8_week: 8 * 7 * 24 * 60 * 60 * 1000,
+        coaching_12_week: 12 * 7 * 24 * 60 * 60 * 1000
+      };
+      const active = (data || []).find(item => {
+        if (item.product_key === "coaching_6_month") return item.payment_status === "active";
+        const duration = durations[item.product_key];
+        if (!duration || item.payment_status !== "paid" || !item.created_at) return false;
+        const purchasedAt = new Date(item.created_at).getTime();
+        return Number.isFinite(purchasedAt) && now < purchasedAt + duration;
+      });
       // Match the questionnaire and readiness flag to the active coaching
       // purchase, not simply the newest purchase (a client may have older or
       // newer one-off test purchases on the same account).
@@ -87,19 +100,6 @@
         coaching_12_week: "Twelve-Week Coaching",
         coaching_6_month: "Six-Month Ongoing Coaching"
       };
-      const now = Date.now();
-      const durations = {
-        coaching_4_week: 4 * 7 * 24 * 60 * 60 * 1000,
-        coaching_8_week: 8 * 7 * 24 * 60 * 60 * 1000,
-        coaching_12_week: 12 * 7 * 24 * 60 * 60 * 1000
-      };
-      const active = (data || []).find(item => {
-        if (item.product_key === "coaching_6_month") return item.payment_status === "active";
-        const duration = durations[item.product_key];
-        if (!duration || item.payment_status !== "paid" || !item.created_at) return false;
-        const purchasedAt = new Date(item.created_at).getTime();
-        return Number.isFinite(purchasedAt) && now < purchasedAt + duration;
-      });
       if (active) {
         programme.textContent = labels[active.product_key] || "Your coaching programme";
         detail.textContent = active.product_key === "coaching_6_month"
