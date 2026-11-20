@@ -396,6 +396,7 @@
     if (adminRecord && window.loadAdminProgressReviews) await window.loadAdminProgressReviews();
     if (adminRecord && window.loadAdminProgrammeReadiness) await window.loadAdminProgrammeReadiness();
     if (adminRecord && window.loadAdminClientRetention) await window.loadAdminClientRetention();
+    if (adminRecord && window.loadAdminCoachingOverview) await window.loadAdminCoachingOverview();
     return true;
   }
 
@@ -917,6 +918,100 @@ window.reframeGetClientNames = async function(userIds){
   }
   refresh?.addEventListener("click",load);
   window.loadAdminClientRetention=load;
+})();
+
+
+/* Admin overview for active six-month coaching clients. */
+(function initialiseAdminCoachingOverview(){
+  const client=window.reframeSupabaseClient;
+  const root=document.querySelector("#coachingOverviewList");
+  const status=document.querySelector("#coachingOverviewMessage");
+  const refresh=document.querySelector("#refreshCoachingOverview");
+  if(!client||!root||!status)return;
+  const fmt=value=>value?new Date(value+"T12:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"}):"Not set";
+  const addMonths=(date,months)=>{const d=new Date(date+"T12:00:00");const day=d.getDate();d.setMonth(d.getMonth()+months);if(d.getDate()<day)d.setDate(0);return d;};
+  const dateString=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
+  async function load(){
+    root.replaceChildren();status.textContent="Loading ongoing coaching clients…";if(refresh)refresh.disabled=true;
+    try{
+      const [{data:purchases,error:purchaseError},{data:forms,error:formError},{data:schedules,error:scheduleError},{data:reviews,error:reviewError}]=await Promise.all([
+        client.from("client_purchases").select("user_id,product_key,payment_status,created_at").eq("product_key","coaching_6_month").eq("payment_status","active").order("created_at",{ascending:false}),
+        client.from("client_onboarding").select("id,user_id,product_key,responses,submitted_at").order("submitted_at",{ascending:false}),
+        client.from("client_programme_schedules").select("user_id,programme_start_date"),
+        client.from("client_progress_reviews").select("user_id,period_start,period_end,progress_summary,wins,challenges,next_goals,coach_feedback,updated_at").order("period_end",{ascending:false})
+      ]);
+      if(purchaseError)throw purchaseError;if(formError)throw formError;if(scheduleError)throw scheduleError;if(reviewError)throw reviewError;
+      const active=new Map();(purchases||[]).forEach(p=>{if(p.user_id&&!active.has(p.user_id))active.set(p.user_id,p);});
+      const latestForms=new Map();(forms||[]).forEach(f=>{if(f.user_id&&!latestForms.has(f.user_id))latestForms.set(f.user_id,f);});
+      const scheduleByUser=new Map((schedules||[]).map(x=>[x.user_id,x]));
+      const reviewsByUser=new Map();(reviews||[]).forEach(r=>{if(!reviewsByUser.has(r.user_id))reviewsByUser.set(r.user_id,[]);reviewsByUser.get(r.user_id).push(r);});
+      const ids=[...active.keys()];
+      if(!ids.length){status.textContent="No active six-month coaching clients yet.";return;}
+      const names=await window.reframeGetClientNames(ids);
+      status.textContent=ids.length+" active six-month coaching client"+(ids.length===1?"":"s")+".";
+      for(const userId of ids){
+        const form=latestForms.get(userId),schedule=scheduleByUser.get(userId),clientReviews=reviewsByUser.get(userId)||[];
+        const start=schedule?.programme_start_date||null;
+        const end=start?dateString(addMonths(start,6)):null;
+        const card=document.createElement("article");card.className="onboarding-submission coaching-overview-card";
+        const details=document.createElement("div");details.className="submission-details";
+        const heading=document.createElement("strong");heading.textContent=names.get(userId)||"Client";
+        const packageLine=document.createElement("small");packageLine.textContent="Six-month ongoing coaching · Active";
+        const grid=document.createElement("div");grid.className="coaching-overview-grid";
+        const addStat=(label,value)=>{const item=document.createElement("div");item.className="coaching-overview-stat";const title=document.createElement("small");title.textContent=label;const val=document.createElement("strong");val.textContent=value;item.append(title,val);grid.append(item);};
+        addStat("Coaching start date",fmt(start));
+        addStat("Estimated six-month end",fmt(end));
+        addStat("Progress reviews completed",String(clientReviews.length));
+        let nextReview="Set a start date first";
+        if(start){
+          const first=new Date(start+"T12:00:00");first.setDate(first.getDate()+28);
+          const today=new Date();today.setHours(12,0,0,0);
+          while(first<today)first.setDate(first.getDate()+28);
+          nextReview=first.toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
+        }
+        addStat("Next four-week review milestone",nextReview);
+        details.append(heading,packageLine,grid);
+        const latest=clientReviews[0];
+        const note=document.createElement("p");note.className="coaching-overview-note";
+        note.textContent=latest
+          ? "Latest review: "+fmt(latest.period_start)+" – "+fmt(latest.period_end)+(latest.next_goals?" · Next goals: "+latest.next_goals:"")
+          : "No four-week progress review has been recorded yet.";
+        details.append(note);
+        const actions=document.createElement("div");actions.className="admin-actions";
+        const reviewButton=document.createElement("button");reviewButton.type="button";reviewButton.className="admin-row-button";reviewButton.textContent="Open progress reviews";
+        reviewButton.addEventListener("click",()=>{
+          const group=document.querySelector(".progress-review-admin-wrap")?.closest("details.admin-tool-group");
+          if(group)group.open=true;
+          const target=document.querySelector("#progressReviewAdmin");
+          if(target)target.scrollIntoView({behavior:"smooth",block:"start"});
+        });
+        actions.append(reviewButton);
+        if(form){
+          const programmeButton=document.createElement("button");programmeButton.type="button";programmeButton.className="admin-row-button";programmeButton.textContent="Open client programme";
+          programmeButton.addEventListener("click",async()=>{
+            programmeButton.disabled=true;programmeButton.textContent="Finding programme…";
+            try{
+              const {data,error}=await client.functions.invoke("google-drive-oauth",{body:{action:"get-client-copy",onboarding_id:form.id}});
+              if(error)throw error;
+              if(data?.copy?.drive_file_url)window.open(data.copy.drive_file_url,"_blank","noopener");
+              else{
+                const readiness=document.querySelector(".programme-readiness-wrap")?.closest("details.admin-tool-group");
+                if(readiness)readiness.open=true;
+                document.querySelector("#programmeReadinessList")?.scrollIntoView({behavior:"smooth",block:"start"});
+                programmeButton.textContent="Prepare in Programme readiness";
+              }
+            }catch(error){console.error("Could not open client programme:",error);programmeButton.textContent="Couldn't find programme";}
+            finally{programmeButton.disabled=false;}
+          });
+          actions.append(programmeButton);
+        }
+        details.append(actions);card.append(details);root.append(card);
+      }
+    }catch(error){console.error("Could not load coaching overview:",error);status.textContent="We couldn't load the coaching overview. Please check admin access and try again.";}
+    finally{if(refresh)refresh.disabled=false;}
+  }
+  refresh?.addEventListener("click",load);
+  window.loadAdminCoachingOverview=load;
 })();
 
 /* Admin control for the point at which a client's personalised programme is ready. */
