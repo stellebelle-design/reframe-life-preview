@@ -931,10 +931,14 @@ window.reframeGetClientNames = async function(userIds){
     status.textContent="Loading submitted questionnaires…";list.replaceChildren();if(refresh)refresh.disabled=true;
     try{
       const {data:forms,error}=await client.from("client_onboarding")
-        .select("purchase_id,user_id,product_key,responses,submitted_at")
+        .select("id,purchase_id,user_id,product_key,responses,submitted_at")
         .order("submitted_at",{ascending:false});
       if(error)throw error;
       if(!forms?.length){status.textContent="No submitted questionnaires yet.";return;}
+      const {data:copyRows,error:copyError}=await client.from("client_programme_copies")
+        .select("onboarding_id,drive_file_url,spreadsheet_name").in("onboarding_id",forms.map(x=>x.id));
+      if(copyError)throw copyError;
+      const copies=new Map((copyRows||[]).map(x=>[x.onboarding_id,x]));
       const ids=[...new Set(forms.map(x=>x.user_id).filter(Boolean))];
       const {data:access,error:accessError}=await client.from("client_access").select("user_id,status").in("user_id",ids);
       if(accessError)throw accessError;
@@ -947,11 +951,14 @@ window.reframeGetClientNames = async function(userIds){
         const {data:ready,error:readyError}=await client.from("client_programme_readiness")
           .select("is_ready").eq("purchase_id",item.purchase_id).maybeSingle();
         if(readyError)throw readyError;
-        const row=document.createElement("article");row.className="onboarding-submission";
-        const details=document.createElement("div");details.className="submission-details";
+        const row=document.createElement("details");row.className="onboarding-submission";
+        const summary=document.createElement("summary");
         const heading=document.createElement("strong");heading.textContent=displayNames.get(item.user_id)||item.responses?.name||"Client";
-        const packageName=document.createElement("p");packageName.textContent=labels[item.product_key]||"Reframe Life programme";
+        const packageName=document.createElement("span");packageName.textContent=labels[item.product_key]||"Reframe Life programme";
         const submitted=document.createElement("small");submitted.textContent="Questionnaire submitted "+new Date(item.submitted_at).toLocaleDateString("en-GB");
+        const hint=document.createElement("small");hint.textContent="OPEN CLIENT";
+        summary.append(heading,packageName,submitted,hint);
+        const details=document.createElement("div");details.className="submission-details";
         const {data:schedule,error:scheduleError}=await client.from("client_programme_schedules").select("programme_start_date").eq("user_id",item.user_id).maybeSingle();
         if(scheduleError)throw scheduleError;
         if(item.product_key!=="personalised_programme"){
@@ -973,6 +980,49 @@ window.reframeGetClientNames = async function(userIds){
           });
           startWrap.append(startTitle,startInput,saveStart,startMessage);details.append(startWrap);
         }
+        const questionnaireTitle=document.createElement("h4");questionnaireTitle.textContent="Questionnaire details";
+        details.append(questionnaireTitle);
+        Object.entries(item.responses&&typeof item.responses==="object"?item.responses:{}).forEach(([key,value])=>{
+          const answer=document.createElement("p");answer.className="submission-meta";
+          const strong=document.createElement("strong");strong.textContent=key.replace(/_/g," ")+": ";
+          answer.append(strong,document.createTextNode(Array.isArray(value)?value.join(", "):String(value??"—")));
+          details.append(answer);
+        });
+        const programmeTitle=document.createElement("h4");programmeTitle.textContent="Personalised programme";
+        const programmeActions=document.createElement("div");programmeActions.className="admin-actions";
+        const programmeButton=document.createElement("button");programmeButton.type="button";programmeButton.className="admin-save";
+        const programmeMessage=document.createElement("p");programmeMessage.className="admin-status";programmeMessage.setAttribute("role","status");
+        const existingCopy=copies.get(item.id);
+        async function createCopy(){
+          programmeButton.disabled=true;programmeButton.textContent="Creating programme…";programmeMessage.textContent="";
+          try{
+            const {data:result,error:invokeError}=await client.functions.invoke("google-drive-oauth",{body:{action:"create-client-copy",onboarding_id:item.id}});
+            if(invokeError)throw invokeError;
+            if(!result?.file?.url)throw new Error("The programme link wasn't returned. Please try again.");
+            const copy={drive_file_url:result.file.url,spreadsheet_name:result.file.name};
+            copies.set(item.id,copy);showCopyLink(copy);
+            programmeMessage.textContent=result.existing?"Your existing client spreadsheet has been updated.":"A separate client spreadsheet is ready.";
+          }catch(error){
+            console.error("Could not create or open client programme:",error);
+            programmeMessage.textContent=error.message||"We couldn't prepare the spreadsheet. Please try again.";
+            programmeButton.textContent="Try again";programmeButton.onclick=createCopy;
+          }finally{programmeButton.disabled=false;}
+        }
+        function showCopyLink(copy){
+          programmeActions.querySelector("a")?.remove();
+          if(copy?.drive_file_url){
+            const link=document.createElement("a");link.href=copy.drive_file_url;link.target="_blank";link.rel="noopener noreferrer";
+            link.textContent="Open "+(copy.spreadsheet_name||"client programme");programmeActions.insertBefore(link,programmeMessage);
+            programmeButton.textContent="Open programme spreadsheet";
+            programmeButton.onclick=()=>window.open(copy.drive_file_url,"_blank","noopener");
+          }else{
+            programmeButton.textContent="Create programme spreadsheet";
+            programmeButton.onclick=createCopy;
+          }
+        }
+        showCopyLink(existingCopy);
+        programmeActions.append(programmeButton,programmeMessage);
+        details.append(programmeTitle,programmeActions);
         const control=document.createElement("label");control.className="admin-publish";
         const checkbox=document.createElement("input");checkbox.type="checkbox";checkbox.checked=!!ready?.is_ready;
         const label=document.createElement("span");label.textContent="Programme prepared and shared with client";
@@ -988,7 +1038,7 @@ window.reframeGetClientNames = async function(userIds){
           }catch(error){console.error("Could not update programme readiness:",error);checkbox.checked=!checkbox.checked;message.textContent="We couldn't save that change. Please try again.";}
           finally{checkbox.disabled=false;}
         });
-        control.append(checkbox,label);details.append(heading,packageName,submitted,control,message);row.append(details);list.append(row);
+        control.append(checkbox,label);details.append(control,message);row.append(summary,details);list.append(row);
       }
     }catch(error){console.error("Could not load programme readiness:",error);status.textContent="We couldn't load programme readiness. Please check administrator access and try again.";}
     finally{if(refresh)refresh.disabled=false;}
