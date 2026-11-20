@@ -44,6 +44,17 @@ Deno.serve(async (req) => {
     let body: { action?: string; onboarding_id?: string } = {};
     try { body = await req.json(); } catch { /* OAuth start may send an empty body. */ }
 
+    if (body.action === "get-client-copy") {
+      const onboardingId = typeof body.onboarding_id === "string" ? body.onboarding_id : "";
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(onboardingId)) {
+        return reply("A valid questionnaire reference is required.", 400);
+      }
+      const { data: copy, error: copyError } = await admin.from("client_programme_copies")
+        .select("drive_file_url,spreadsheet_name").eq("onboarding_id", onboardingId).maybeSingle();
+      if (copyError) return reply("Could not load the client's programme link.", 500);
+      return json({ copy: copy || null });
+    }
+
     if (body.action === "create-client-copy") {
       const onboardingId = typeof body.onboarding_id === "string" ? body.onboarding_id : "";
       if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(onboardingId)) {
