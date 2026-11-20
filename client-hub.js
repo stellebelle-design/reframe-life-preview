@@ -91,6 +91,26 @@
           nextTitle.textContent = "It's time to get started!";
           nextCopy.textContent = "You've got your plan, you've got your support, and you've got everything you need to begin. Take it one step at a time, believe in yourself and go smash those goals!";
           nextLink.hidden = true;
+          const programmeAccess = document.querySelector("#clientProgrammeAccess");
+          const programmeAccessLink = document.querySelector("#clientProgrammeLink");
+          const programmeAccessMessage = document.querySelector("#clientProgrammeAccessMessage");
+          if (programmeAccess) programmeAccess.hidden = false;
+          if (programmeAccessMessage) programmeAccessMessage.textContent = "Your coach will also email you a copy of your personalised programme.";
+          if (programmeAccessLink) {
+            programmeAccessLink.hidden = true;
+            programmeAccessMessage && (programmeAccessMessage.textContent = "Your coach will also email you a copy of your personalised programme. Loading your hub link…");
+            const { data: programmeCopy, error: programmeCopyError } = await client.functions.invoke("google-drive-oauth", {
+              body: { action: "get-client-copy", onboarding_id: onboarding.id }
+            });
+            if (programmeCopyError) throw programmeCopyError;
+            if (programmeCopy?.copy?.drive_file_url) {
+              programmeAccessLink.href = programmeCopy.copy.drive_file_url;
+              programmeAccessLink.hidden = false;
+              programmeAccessMessage && (programmeAccessMessage.textContent = "Your coach will also email you a copy, but you can open your programme here whenever you need it.");
+            } else if (programmeAccessMessage) {
+              programmeAccessMessage.textContent = "Your coach will email you your personalised programme once it has been shared. If you have not received it, please get in touch.";
+            }
+          }
         }
       }
       const labels = {
