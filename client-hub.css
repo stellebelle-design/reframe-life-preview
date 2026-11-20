@@ -438,3 +438,9 @@
 .programme-builder-saved{font-size:.68rem;color:var(--ink-soft)}
 .programme-builder-launch{margin-top:18px}
 @media(max-width:600px){.programme-builder{padding:16px}.programme-builder-form,.programme-builder-form fieldset{grid-template-columns:1fr}.programme-builder-form fieldset>label{grid-column:1!important}.programme-builder-form>label{grid-column:1}.programme-builder-actions{align-items:flex-start;flex-direction:column}}
+
+
+/* Client-facing personalised programme access */
+.client-programme-access{margin-top:14px;background:#f7f3ee;border:1px solid #e8ded2}
+.client-programme-access h3{font-family:var(--serif);font-weight:500}
+.client-programme-access .dashboard-link{display:inline-flex;margin-top:8px}
