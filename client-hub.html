@@ -15,6 +15,12 @@
 .sidebar-view-switch button[aria-pressed="true"]{background:#fff;color:#3f3934;box-shadow:0 1px 4px rgba(0,0,0,.06);font-weight:600}
 .sidebar-view-switch button:focus-visible{outline:2px solid var(--stone);outline-offset:2px}
 @media(max-width:760px){.sidebar-view-switch{max-width:280px}.sidebar-view-switch button{font-size:15px}}
+.coaching-overview-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:16px 0}
+.coaching-overview-stat{padding:12px 14px;background:#f7f3ee;border:1px solid #ebe3da;border-radius:12px;display:flex;flex-direction:column;gap:5px;min-width:0}
+.coaching-overview-stat small{color:#746b62;font-size:12px}
+.coaching-overview-stat strong{font-size:14px;font-weight:600;color:#403a35}
+.coaching-overview-note{padding:12px 14px;background:#fbf9f6;border-left:3px solid #c9b9a7;border-radius:0 10px 10px 0;line-height:1.55}
+@media(max-width:600px){.coaching-overview-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -165,7 +171,12 @@
           <p id="checkinAdminMessage" class="admin-status" role="status" aria-live="polite">Check-ins will appear here.</p>
           <div id="checkinAdminList" class="onboarding-admin-list"></div>
         </div>
-        <div class="admin-list-wrap progress-review-admin-wrap"><div class="admin-submissions-heading"><div><h3>Four-week progress reviews</h3><p class="section-intro">Bring together a client’s recent check-ins and record progress and next steps.</p></div><button type="button" class="admin-row-button" id="refreshProgressReviews">Refresh reviews</button></div><p id="progressReviewAdminMessage" class="admin-status" role="status" aria-live="polite">Choose a client to begin.</p><div id="progressReviewAdmin"></div></div><div class="admin-list-wrap programme-readiness-wrap">
+        <div class="admin-list-wrap progress-review-admin-wrap"><div class="admin-submissions-heading"><div><h3>Four-week progress reviews</h3><p class="section-intro">Bring together a client’s recent check-ins and record progress and next steps.</p></div><button type="button" class="admin-row-button" id="refreshProgressReviews">Refresh reviews</button></div><p id="progressReviewAdminMessage" class="admin-status" role="status" aria-live="polite">Choose a client to begin.</p><div id="progressReviewAdmin"></div></div><div class="admin-list-wrap coaching-overview-wrap">
+          <div class="admin-submissions-heading"><div><h3>Coaching overview</h3><p class="section-intro">A simple timeline for active six-month clients, with programme access and links to their progress reviews.</p></div><button type="button" class="admin-row-button" id="refreshCoachingOverview">Refresh clients</button></div>
+          <p id="coachingOverviewMessage" class="admin-status" role="status" aria-live="polite">Ongoing coaching clients will appear here.</p>
+          <div id="coachingOverviewList" class="onboarding-admin-list"></div>
+        </div>
+        <div class="admin-list-wrap programme-readiness-wrap">
           <div class="admin-submissions-heading"><div><h3>Programme readiness</h3><p class="section-intro">Mark a client's programme as ready once you've finished preparing and shared it with them.</p></div><button type="button" class="admin-row-button" id="refreshProgrammeReadiness">Refresh clients</button></div>
           <p id="programmeReadinessMessage" class="admin-status" role="status" aria-live="polite">Client questionnaires will appear here.</p>
           <div id="programmeReadinessList" class="onboarding-admin-list"></div>
