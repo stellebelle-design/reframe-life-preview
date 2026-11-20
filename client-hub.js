@@ -1162,11 +1162,14 @@ window.reframeGetClientNames = async function(userIds){
         checkbox.addEventListener("change",async()=>{
           checkbox.disabled=true;message.textContent="Saving…";
           try{
-            const {error:saveError}=await client.from("client_programme_readiness").upsert({
+            const {data:savedReady,error:saveError}=await client.from("client_programme_readiness").upsert({
               purchase_id:item.purchase_id,user_id:item.user_id,is_ready:checkbox.checked,updated_at:new Date().toISOString()
-            },{onConflict:"purchase_id"});
+            },{onConflict:"purchase_id"}).select("purchase_id,user_id,is_ready").single();
             if(saveError)throw saveError;
-            message.textContent=checkbox.checked?"Marked as ready. The client will now see their encouragement message.":"Marked as not yet ready.";
+            if(!savedReady || savedReady.user_id!==item.user_id || savedReady.is_ready!==checkbox.checked){
+              throw new Error("The database did not confirm the readiness change. Please refresh and try again.");
+            }
+            message.textContent=checkbox.checked?"Saved and verified. The client will now see their encouragement message.":"Saved and verified. The programme is marked as not yet ready.";
           }catch(error){console.error("Could not update programme readiness:",error);checkbox.checked=!checkbox.checked;message.textContent="We couldn't save that change. Please try again.";}
           finally{checkbox.disabled=false;}
         });
