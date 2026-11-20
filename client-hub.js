@@ -964,7 +964,8 @@ window.reframeGetClientNames = async function(userIds){
         addStat("Progress reviews completed",String(clientReviews.length));
         let nextReview="Set a start date first";
         if(start){
-          const first=new Date(start+"T12:00:00");first.setDate(first.getDate()+28);
+          const first=new Date(start+"T12:00:00");first.setDate(first.getDate()+27);
+          while(first.getDay()!==0)first.setDate(first.getDate()+1);
           const today=new Date();today.setHours(12,0,0,0);
           while(first<today)first.setDate(first.getDate()+28);
           nextReview=first.toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
