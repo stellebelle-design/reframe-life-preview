@@ -206,10 +206,11 @@
    const periodLabel=make("label",null,"Review period starts");const start=make("input");start.type="date";periodLabel.append(start);controls.append(clientLabel,periodLabel);root.append(controls);
    const panel=make("div");root.append(panel);
    function defaultStart(uid){
-    const saved=(reviewRows||[]).filter(x=>x.user_id===uid).sort((a,b)=>b.period_start.localeCompare(a.period_start));
-    if(saved.length&&saved[0].period_end){const next=new Date(saved[0].period_end+"T12:00:00");next.setDate(next.getDate()+1);return dateOnly(next);}
     const schedule=(scheduleRows||[]).find(x=>x.user_id===uid);
-    return schedule?.programme_start_date||"";
+    const programmeStart=schedule?.programme_start_date||"";
+    const saved=(reviewRows||[]).filter(x=>x.user_id===uid&&(!programmeStart||x.period_start>=programmeStart)).sort((a,b)=>b.period_start.localeCompare(a.period_start));
+    if(saved.length&&saved[0].period_end){const next=new Date(saved[0].period_end+"T12:00:00");next.setDate(next.getDate()+1);return dateOnly(next);}
+    return programmeStart;
    }
    start.value=defaultStart(select.value);
    async function showClient(){
@@ -221,7 +222,8 @@
     const rows=checkins.filter(x=>x.user_id===uid&&x.week_start>=start.value&&x.week_start<=periodEnd).slice(0,4);
     const {data:existing,error:reviewError}=await client.from("client_progress_reviews").select("*").eq("user_id",uid).eq("period_start",start.value).maybeSingle();
     if(reviewError)throw reviewError;panel.replaceChildren();
-    const savedForClient=(reviewRows||[]).filter(item=>item.user_id===uid).sort((a,b)=>b.period_start.localeCompare(a.period_start));
+    const programmeStart=(scheduleRows||[]).find(item=>item.user_id===uid)?.programme_start_date||"";
+    const savedForClient=(reviewRows||[]).filter(item=>item.user_id===uid&&(!programmeStart||item.period_start>=programmeStart)).sort((a,b)=>b.period_start.localeCompare(a.period_start));
     const reflection=(reflectionRows||[]).find(item=>item.user_id===uid&&item.period_start===start.value);
     if(reflection){
      const box=make("div","progress-client-reflection-admin");box.append(make("h4",null,"Client’s four-week reflection"));
