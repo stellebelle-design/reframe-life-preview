@@ -935,10 +935,6 @@ window.reframeGetClientNames = async function(userIds){
         .order("submitted_at",{ascending:false});
       if(error)throw error;
       if(!forms?.length){status.textContent="No submitted questionnaires yet.";return;}
-      const {data:copyRows,error:copyError}=await client.from("client_programme_copies")
-        .select("onboarding_id,drive_file_url,spreadsheet_name").in("onboarding_id",forms.map(x=>x.id));
-      if(copyError)throw copyError;
-      const copies=new Map((copyRows||[]).map(x=>[x.onboarding_id,x]));
       const ids=[...new Set(forms.map(x=>x.user_id).filter(Boolean))];
       const {data:access,error:accessError}=await client.from("client_access").select("user_id,status").in("user_id",ids);
       if(accessError)throw accessError;
@@ -992,7 +988,9 @@ window.reframeGetClientNames = async function(userIds){
         const programmeActions=document.createElement("div");programmeActions.className="admin-actions";
         const programmeButton=document.createElement("button");programmeButton.type="button";programmeButton.className="admin-save";
         const programmeMessage=document.createElement("p");programmeMessage.className="admin-status";programmeMessage.setAttribute("role","status");
-        const existingCopy=copies.get(item.id);
+        const {data:copyLookup,error:copyLookupError}=await client.functions.invoke("google-drive-oauth",{body:{action:"get-client-copy",onboarding_id:item.id}});
+        if(copyLookupError)throw copyLookupError;
+        const existingCopy=copyLookup?.copy||null;
         async function createCopy(){
           programmeButton.disabled=true;programmeButton.textContent="Creating programme…";programmeMessage.textContent="";
           try{
@@ -1000,7 +998,7 @@ window.reframeGetClientNames = async function(userIds){
             if(invokeError)throw invokeError;
             if(!result?.file?.url)throw new Error("The programme link wasn't returned. Please try again.");
             const copy={drive_file_url:result.file.url,spreadsheet_name:result.file.name};
-            copies.set(item.id,copy);showCopyLink(copy);
+            showCopyLink(copy);
             programmeMessage.textContent=result.existing?"Your existing client spreadsheet has been updated.":"A separate client spreadsheet is ready.";
           }catch(error){
             console.error("Could not create or open client programme:",error);
