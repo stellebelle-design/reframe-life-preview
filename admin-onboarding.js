@@ -213,9 +213,12 @@
    }
    start.value=defaultStart(select.value);
    async function showClient(){
-    const uid=select.value,rows=checkins.filter(x=>x.user_id===uid).slice(0,4);
+    const uid=select.value;
     if(!start.value)start.value=defaultStart(uid);
     if(!start.value){panel.replaceChildren(make("p","admin-status","Add this client's actual programme start date in the Programme readiness section before creating their first four-week review."));return;}
+    const endDate=new Date(start.value+"T12:00:00");endDate.setDate(endDate.getDate()+27);while(endDate.getDay()!==0)endDate.setDate(endDate.getDate()+1);
+    const periodEnd=dateOnly(endDate);
+    const rows=checkins.filter(x=>x.user_id===uid&&x.week_start>=start.value&&x.week_start<=periodEnd).slice(0,4);
     const {data:existing,error:reviewError}=await client.from("client_progress_reviews").select("*").eq("user_id",uid).eq("period_start",start.value).maybeSingle();
     if(reviewError)throw reviewError;panel.replaceChildren();
     const savedForClient=(reviewRows||[]).filter(item=>item.user_id===uid).sort((a,b)=>b.period_start.localeCompare(a.period_start));
@@ -238,7 +241,7 @@
     const history=make("div","progress-review-checkins");history.append(make("h4",null,"Recent weekly check-ins"));
     if(!rows.length)history.append(make("p",null,"No check-ins found for this client."));
     rows.forEach(item=>{const line=make("div","progress-review-checkin");line.append(make("strong",null,displayDate(item.week_start)+" · "),document.createTextNode("Energy "+item.energy+"/5 · Mood "+item.mood+"/5 · Confidence "+item.confidence+"/5 · Consistency "+item.consistency+"/5"));if(item.wins)line.append(make("p",null,"Proud of: "+item.wins));if(item.support_needed)line.append(make("p",null,"Support wanted: "+item.support_needed));history.append(line);});
-    const form=make("form","progress-review-form");const endDate=new Date(start.value+"T12:00:00");endDate.setDate(endDate.getDate()+27);while(endDate.getDay()!==0)endDate.setDate(endDate.getDate()+1);
+    const form=make("form","progress-review-form");
     const fields=[["progress_summary","Overall progress","What has changed over the last four weeks?"],["wins","Wins and positive changes","Celebrate progress beyond the scales too."],["challenges","Challenges or support needed","What has felt difficult or needs attention?"],["next_goals","Goals for the next four weeks","Agree realistic, meaningful next steps."],["coach_feedback","Your feedback for the client","Write your personal review and encouragement."]];
     const inputs={};fields.forEach(([key,label,placeholder])=>{const wrap=make("label",null,label);const area=make("textarea");area.rows=3;area.maxLength=5000;area.placeholder=placeholder;area.value=existing?.[key]||"";wrap.append(area);form.append(wrap);inputs[key]=area;});
     form.append(make("p","submission-meta","Review period: "+displayDate(start.value)+" – "+displayDate(dateOnly(endDate))));
