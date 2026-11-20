@@ -291,7 +291,7 @@
     const save=make("button","admin-save","Save four-week review");save.type="submit";const msg=make("p",null,"");msg.id="progressReviewSaveMessage";msg.setAttribute("role","status");form.append(save,msg);panel.append(history,form);
     form.addEventListener("submit",async event=>{event.preventDefault();save.disabled=true;save.textContent="Saving…";msg.textContent="";
      try{const payload={user_id:uid,period_start:start.value,period_end:dateOnly(endDate),progress_summary:inputs.progress_summary.value.trim(),wins:inputs.wins.value.trim(),challenges:inputs.challenges.value.trim(),next_goals:inputs.next_goals.value.trim(),coach_feedback:inputs.coach_feedback.value.trim(),updated_at:new Date().toISOString()};
-      const {error:saveError}=await client.from("client_progress_reviews").upsert(payload,{onConflict:"user_id,period_start"});if(saveError)throw saveError;msg.textContent="Four-week review saved. The client can now see it in their Client Hub.";save.textContent="Update four-week review";
+      const {error:saveError}=await client.from("client_progress_reviews").upsert(payload,{onConflict:"user_id,period_start"});if(saveError)throw saveError;msg.textContent="Four-week review saved. The client can now see it in their Client Hub.";save.textContent="Update four-week review";await load();
      }catch(error){console.error("Could not save progress review:",error);msg.textContent="We couldn’t save the review. Please try again.";save.textContent="Save four-week review";}finally{save.disabled=false;}
     });
    }
