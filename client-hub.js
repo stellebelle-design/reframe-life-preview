@@ -42,19 +42,23 @@
         .order("created_at", { ascending: false });
       if (error) throw error;
       const latestPurchase = (data || [])[0];
+      // Match the questionnaire and readiness flag to the active coaching
+      // purchase, not simply the newest purchase (a client may have older or
+      // newer one-off test purchases on the same account).
+      const dashboardPurchase = active || latestPurchase;
       const nextTitle = document.querySelector("#dashboardNextTitle");
       const nextCopy = document.querySelector("#dashboardNextCopy");
       const nextLink = document.querySelector("#dashboardNextLink");
       let onboarding = null;
       let readiness = null;
-      if (latestPurchase) {
+      if (dashboardPurchase) {
         const { data: submitted, error: onboardingError } = await client.from("client_onboarding")
-          .select("id,submitted_at").eq("purchase_id", latestPurchase.id).maybeSingle();
+          .select("id,submitted_at").eq("purchase_id", dashboardPurchase.id).maybeSingle();
         if (onboardingError) throw onboardingError;
         onboarding = submitted;
         if (onboarding) {
           const { data: ready, error: readinessError } = await client.from("client_programme_readiness")
-            .select("is_ready").eq("purchase_id", latestPurchase.id).maybeSingle();
+            .select("is_ready").eq("purchase_id", dashboardPurchase.id).maybeSingle();
           if (readinessError) throw readinessError;
           readiness = !!ready?.is_ready;
         }
