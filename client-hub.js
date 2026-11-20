@@ -1020,8 +1020,8 @@ window.reframeGetClientNames = async function(userIds){
             programmeButton.onclick=createCopy;
           }
         }
-        showCopyLink(existingCopy);
         programmeActions.append(programmeButton,programmeMessage);
+        showCopyLink(existingCopy);
         details.append(programmeTitle,programmeActions);
         const control=document.createElement("label");control.className="admin-publish";
         const checkbox=document.createElement("input");checkbox.type="checkbox";checkbox.checked=!!ready?.is_ready;
