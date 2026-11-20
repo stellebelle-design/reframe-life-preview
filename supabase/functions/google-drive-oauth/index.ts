@@ -224,7 +224,7 @@ Deno.serve(async (req) => {
     }
     const params = new URLSearchParams({
       client_id: GOOGLE_CLIENT_ID, redirect_uri: REDIRECT_URI, response_type: "code",
-      scope: "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets",
+      scope: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/spreadsheets",
       access_type: "offline", prompt: "select_account consent", state,
     });
     return json({ authorization_url: "https://accounts.google.com/o/oauth2/v2/auth?" + params.toString() });
