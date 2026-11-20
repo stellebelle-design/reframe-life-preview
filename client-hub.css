@@ -471,3 +471,10 @@
 .programme-readiness-wrap .admin-publish input{width:18px;height:18px;accent-color:var(--sage);flex:0 0 auto}
 .programme-readiness-wrap .admin-status{margin:8px 0 0;font-size:.74rem;color:var(--ink-soft)}
 @media(max-width:600px){.programme-readiness-wrap .onboarding-submission>summary{grid-template-columns:minmax(0,1fr);row-gap:6px;padding:16px}.programme-readiness-wrap .onboarding-submission>summary .programme-status-badge{grid-column:1;grid-row:auto;justify-self:start;margin-top:5px}.programme-readiness-wrap .submission-details{padding:16px}.programme-readiness-wrap .submission-answer{grid-template-columns:1fr;gap:7px}}
+
+
+/* Automatic six-month coaching lifecycle labels */
+.coaching-state-badge{display:inline-flex;width:max-content;align-items:center;margin:10px 0 14px;padding:6px 10px;border-radius:999px;background:#eee7da;color:#74634e;font:600 .62rem var(--sans);letter-spacing:.09em}
+.coaching-state-badge[data-state="active"]{background:#e6eee5;color:#536b50}
+.coaching-state-badge[data-state="completed"]{background:#ece9e5;color:#68615a}
+.coaching-state-badge[data-state="needs-date"]{background:#f6eadb;color:#89643f}
