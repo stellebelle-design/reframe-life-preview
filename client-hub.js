@@ -980,7 +980,7 @@ window.reframeGetClientNames = async function(userIds){
       const ids=[...active.keys()];
       if(!ids.length){status.textContent="No active six-month coaching clients yet.";return;}
       const names=await window.reframeGetClientNames(ids);
-      status.textContent=ids.length+" active six-month coaching client"+(ids.length===1?"":"s")+".";
+      status.textContent=ids.length+" six-month coaching client"+(ids.length===1?"":"s")+".";
       for(const userId of ids){
         const form=latestForms.get(userId),schedule=scheduleByUser.get(userId),allClientReviews=reviewsByUser.get(userId)||[];
         const start=schedule?.programme_start_date||null;
@@ -989,10 +989,14 @@ window.reframeGetClientNames = async function(userIds){
         // pre-programme reviews from the live six-month timeline.
         const clientReviews=start?allClientReviews.filter(review=>review.period_start>=start):allClientReviews;
         const end=start?dateString(addMonths(start,6)):null;
+        const now=new Date(),today=dateString(new Date(now.getFullYear(),now.getMonth(),now.getDate()));
+        const coachingState=!start?"needs-date":today<start?"upcoming":today>=end?"completed":"active";
+        const coachingLabels={"needs-date":"START DATE NEEDED",upcoming:"UPCOMING",active:"ACTIVE",completed:"COMPLETED"};
         const card=document.createElement("article");card.className="onboarding-submission coaching-overview-card";
         const details=document.createElement("div");details.className="submission-details";
         const heading=document.createElement("strong");heading.textContent=names.get(userId)||"Client";
-        const packageLine=document.createElement("small");packageLine.textContent="Six-month ongoing coaching · Active";
+        const packageLine=document.createElement("small");packageLine.textContent="Six-month ongoing coaching";
+        const stateBadge=document.createElement("span");stateBadge.className="coaching-state-badge";stateBadge.dataset.state=coachingState;stateBadge.textContent=coachingLabels[coachingState];
         const grid=document.createElement("div");grid.className="coaching-overview-grid";
         const addStat=(label,value)=>{const item=document.createElement("div");item.className="coaching-overview-stat";const title=document.createElement("small");title.textContent=label;const val=document.createElement("strong");val.textContent=value;item.append(title,val);grid.append(item);};
         addStat("Coaching start date",fmt(start));
@@ -1009,7 +1013,7 @@ window.reframeGetClientNames = async function(userIds){
           nextReview=first.toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric",timeZone:"UTC"});
         }
         addStat("Next four-week review milestone",nextReview);
-        details.append(heading,packageLine,grid);
+        details.append(heading,packageLine,stateBadge,grid);
         const latest=clientReviews[0];
         const note=document.createElement("p");note.className="coaching-overview-note";
         note.textContent=latest
