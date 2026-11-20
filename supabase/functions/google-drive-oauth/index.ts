@@ -52,9 +52,6 @@ Deno.serve(async (req) => {
       const { data: existing, error: existingError } = await admin.from("client_programme_copies")
         .select("drive_file_id,drive_file_url,spreadsheet_name,created_at").eq("onboarding_id", onboardingId).maybeSingle();
       if (existingError) return reply("Could not check whether this client already has a programme copy.", 500);
-      if (existing?.drive_file_id) {
-        return json({ created: false, existing: true, file: { id: existing.drive_file_id, name: existing.spreadsheet_name, url: existing.drive_file_url } });
-      }
       const { data: submission, error: submissionError } = await admin.from("client_onboarding")
         .select("id,purchase_id,user_id,product_key,responses").eq("id", onboardingId).maybeSingle();
       if (submissionError || !submission) return reply("The client questionnaire could not be found.", 404);
@@ -85,36 +82,81 @@ Deno.serve(async (req) => {
           access_token_expires_at: new Date(Date.now() + Number(tokens.expires_in || 3600) * 1000).toISOString(),
         }).eq("id", 1);
       }
-      const rawName = submission.responses?.name;
-      const clientName = (typeof rawName === "string" && rawName.trim()) ? rawName.trim() : "Client";
+      const { data: clientAuth, error: clientAuthError } = await admin.auth.admin.getUserById(submission.user_id);
+      if (clientAuthError) console.error("Could not read client profile name:", clientAuthError);
+      const metadata = clientAuth?.user?.user_metadata || {};
+      const metadataName = metadata.full_name || metadata.name || metadata.display_name;
+      const responseName = submission.responses?.name;
+      const clientName = (typeof metadataName === "string" && metadataName.trim())
+        ? metadataName.trim()
+        : (typeof responseName === "string" && responseName.trim()) ? responseName.trim() : "Client";
       const safeName = clientName.replace(/[\\/:*?"<>|#%{}~&]/g, " ").replace(/\\s+/g, " ").trim().slice(0, 80) || "Client";
-      const programmeName = "Reframe Life Programme - " + safeName;
-      const copyResponse = await fetch(
-        "https://www.googleapis.com/drive/v3/files/" + master.spreadsheet_id + "/copy?fields=id,name,mimeType,webViewLink",
-        {
-          method: "POST",
+      const programmeName = "Reframe Life - " + safeName + " - Programme";
+      let fileId = existing?.drive_file_id || "";
+      let fileUrl = existing?.drive_file_url || "";
+      let finalFileName = programmeName;
+
+      if (fileId) {
+        const renameResponse = await fetch("https://www.googleapis.com/drive/v3/files/" + fileId + "?fields=id,name,webViewLink", {
+          method: "PATCH",
           headers: { Authorization: "Bearer " + accessToken, "Content-Type": "application/json" },
           body: JSON.stringify({ name: programmeName }),
+        });
+        const renamed = await renameResponse.json();
+        if (!renameResponse.ok) return reply("The existing client spreadsheet could not be renamed: " + (renamed.error?.message || renameResponse.status), 500);
+        finalFileName = renamed.name || programmeName;
+        fileUrl = renamed.webViewLink || fileUrl;
+      } else {
+        const copyResponse = await fetch(
+          "https://www.googleapis.com/drive/v3/files/" + master.spreadsheet_id + "/copy?fields=id,name,mimeType,webViewLink",
+          {
+            method: "POST",
+            headers: { Authorization: "Bearer " + accessToken, "Content-Type": "application/json" },
+            body: JSON.stringify({ name: programmeName }),
+          },
+        );
+        const copied = await copyResponse.json();
+        if (!copyResponse.ok || !copied.id) {
+          const googleMessage = copied.error?.message || ("HTTP " + copyResponse.status);
+          console.error("Google Drive copy failed:", copied.error?.code, googleMessage);
+          if (copyResponse.status === 403) return reply("Google Drive could not copy the template. Please reconnect Google Drive and approve file access, then try again. Google said: " + googleMessage, 403);
+          return reply("Google Drive could not create this client's programme copy: " + googleMessage, copyResponse.status || 500);
+        }
+        fileId = copied.id;
+        fileUrl = copied.webViewLink || ("https://docs.google.com/spreadsheets/d/" + fileId + "/edit");
+        finalFileName = copied.name || programmeName;
+      }
+
+      const nameCellResponse = await fetch(
+        "https://sheets.googleapis.com/v4/spreadsheets/" + fileId + "/values/" + encodeURIComponent("'Programme'!A5") + "?valueInputOption=USER_ENTERED",
+        {
+          method: "PUT",
+          headers: { Authorization: "Bearer " + accessToken, "Content-Type": "application/json" },
+          body: JSON.stringify({ range: "'Programme'!A5", majorDimension: "ROWS", values: [[clientName]] }),
         },
       );
-      const copied = await copyResponse.json();
-      if (!copyResponse.ok || !copied.id) {
-        const googleMessage = copied.error?.message || ("HTTP " + copyResponse.status);
-        console.error("Google Drive copy failed:", copied.error?.code, googleMessage);
-        if (copyResponse.status === 403) return reply("Google Drive could not copy the template. Please reconnect Google Drive and approve file access, then try again. Google said: " + googleMessage, 403);
-        return reply("Google Drive could not create this client's programme copy: " + googleMessage, copyResponse.status || 500);
+      const nameCellResult = await nameCellResponse.json();
+      if (!nameCellResponse.ok) {
+        console.error("Could not write client name into Programme!A5:", nameCellResult.error?.message || nameCellResponse.status);
+        return reply("The spreadsheet was created, but the client name could not be added to Programme!A5: " + (nameCellResult.error?.message || nameCellResponse.status), 500);
       }
-      const fileUrl = copied.webViewLink || ("https://docs.google.com/spreadsheets/d/" + copied.id + "/edit");
-      const { error: saveCopyError } = await admin.from("client_programme_copies").insert({
-        onboarding_id: submission.id, user_id: submission.user_id, purchase_id: submission.purchase_id,
-        product_key: submission.product_key, client_name: clientName, spreadsheet_name: copied.name || programmeName,
-        drive_file_id: copied.id, drive_file_url: fileUrl, created_by: userData.user.id,
-      });
-      if (saveCopyError) {
-        console.error("Could not save client programme copy record:", saveCopyError);
-        return reply("The spreadsheet copy was created, but its client link could not be saved. Please contact support before trying again.", 500);
+
+      if (!existing?.drive_file_id) {
+        const { error: saveCopyError } = await admin.from("client_programme_copies").insert({
+          onboarding_id: submission.id, user_id: submission.user_id, purchase_id: submission.purchase_id,
+          product_key: submission.product_key, client_name: clientName, spreadsheet_name: finalFileName,
+          drive_file_id: fileId, drive_file_url: fileUrl, created_by: userData.user.id,
+        });
+        if (saveCopyError) {
+          console.error("Could not save client programme copy record:", saveCopyError);
+          return reply("The spreadsheet copy was created, but its client link could not be saved. Please contact support before trying again.", 500);
+        }
+      } else {
+        await admin.from("client_programme_copies").update({
+          client_name: clientName, spreadsheet_name: finalFileName, drive_file_url: fileUrl,
+        }).eq("onboarding_id", onboardingId);
       }
-      return json({ created: true, existing: false, file: { id: copied.id, name: copied.name || programmeName, url: fileUrl } });
+      return json({ created: !existing?.drive_file_id, existing: !!existing?.drive_file_id, file: { id: fileId, name: finalFileName, url: fileUrl } });
     }
 
     if (body.action === "master-status") {
