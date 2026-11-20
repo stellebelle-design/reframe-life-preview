@@ -215,7 +215,9 @@
     const end=new Date(nextStart+"T12:00:00");end.setDate(end.getDate()+27);while(end.getDay()!==0)end.setDate(end.getDate()+1);
     const periodEnd=dateOnly(end);
     const periodCheckins=checkins.filter(x=>x.user_id===uid&&x.week_start>=nextStart&&x.week_start<=periodEnd);
-    if(today<periodEnd)return {uid,name:clientNames.get(uid)||"Client",state:"upcoming",label:"UPCOMING",detail:"Next review period ends "+displayDate(periodEnd)+"."};
+    if(today<periodEnd)return latest
+     ? {uid,name:clientNames.get(uid)||"Client",state:"completed",label:"COMPLETED",detail:"Latest review shared for "+displayDate(latest.period_start)+". Next review due "+displayDate(periodEnd)+"."}
+     : {uid,name:clientNames.get(uid)||"Client",state:"upcoming",label:"UPCOMING",detail:"First review period ends "+displayDate(periodEnd)+"."};
     if(periodCheckins.length)return {uid,name:clientNames.get(uid)||"Client",state:"awaiting",label:"AWAITING YOUR REVIEW",detail:periodCheckins.length+" weekly check-in"+(periodCheckins.length===1?"":"s")+" received for this period."};
     return {uid,name:clientNames.get(uid)||"Client",state:"due",label:"REVIEW DUE",detail:"The four-week period ended "+displayDate(periodEnd)+". No weekly check-ins were found."};
    });
