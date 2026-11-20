@@ -449,3 +449,25 @@
 /* At-a-glance programme preparation status in the admin client list */
 .programme-status-badge{display:inline-flex;align-items:center;justify-content:center;width:max-content;padding:5px 9px;border-radius:999px;font:600 .62rem var(--sans);letter-spacing:.07em;white-space:nowrap;background:#eee7da;color:#74634e}
 .programme-status-badge[data-state="ready"]{background:#e6eee5;color:#536b50}
+
+
+/* Cleaner client cards in Programme preparation */
+.programme-readiness-wrap .onboarding-admin-list{display:grid;gap:16px}
+.programme-readiness-wrap .onboarding-submission{padding:0;overflow:hidden;border:1px solid rgba(156,141,116,.28);border-radius:14px;background:#fffdf9;box-shadow:0 3px 12px rgba(48,39,27,.045)}
+.programme-readiness-wrap .onboarding-submission>summary{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto auto;align-items:center;column-gap:18px;row-gap:4px;padding:19px 22px;list-style:none}
+.programme-readiness-wrap .onboarding-submission>summary::-webkit-details-marker{display:none}
+.programme-readiness-wrap .onboarding-submission>summary strong{grid-column:1;grid-row:1;font:500 1.3rem/1.2 var(--serif);color:var(--ink)}
+.programme-readiness-wrap .onboarding-submission>summary span{grid-column:1;grid-row:2;font-size:.8rem;color:var(--ink-soft)}
+.programme-readiness-wrap .onboarding-submission>summary small:not(.programme-status-badge){grid-column:1;grid-row:3;font-size:.68rem;color:var(--stone)}
+.programme-readiness-wrap .onboarding-submission>summary .programme-status-badge{grid-column:2;grid-row:1 / span 3;align-self:center}
+.programme-readiness-wrap .submission-details{margin:0;padding:20px 22px 22px;border-top:1px solid var(--line);background:#fff}
+.programme-readiness-wrap .submission-details>h4{margin:18px 0 10px;font:500 1.2rem var(--serif)}
+.programme-readiness-wrap .submission-details>h4:first-child{margin-top:0}
+.programme-readiness-wrap .submission-meta{margin:0;padding:8px 0;border-bottom:1px solid #eee9e2;font-size:.78rem;line-height:1.5;overflow-wrap:anywhere}
+.programme-readiness-wrap .submission-meta strong{text-transform:capitalize;color:var(--ink-soft);font-weight:600}
+.programme-readiness-wrap .submission-answer{align-items:center;gap:14px;padding:12px 0}
+.programme-readiness-wrap .submission-answer input[type=date]{max-width:190px;padding:9px;border:1px solid var(--line);background:var(--cream);color:var(--ink)}
+.programme-readiness-wrap .admin-publish{display:flex;align-items:center;gap:11px;margin:18px 0 8px;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--cream);font-size:.8rem;color:var(--ink)}
+.programme-readiness-wrap .admin-publish input{width:18px;height:18px;accent-color:var(--sage);flex:0 0 auto}
+.programme-readiness-wrap .admin-status{margin:8px 0 0;font-size:.74rem;color:var(--ink-soft)}
+@media(max-width:600px){.programme-readiness-wrap .onboarding-submission>summary{grid-template-columns:minmax(0,1fr);row-gap:6px;padding:16px}.programme-readiness-wrap .onboarding-submission>summary .programme-status-badge{grid-column:1;grid-row:auto;justify-self:start;margin-top:5px}.programme-readiness-wrap .submission-details{padding:16px}.programme-readiness-wrap .submission-answer{grid-template-columns:1fr;gap:7px}}
