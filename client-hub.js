@@ -99,16 +99,21 @@
           if (programmeAccessLink) {
             programmeAccessLink.hidden = true;
             programmeAccessMessage && (programmeAccessMessage.textContent = "Your coach will also email you a copy of your personalised programme. Loading your hub link…");
-            const { data: programmeCopy, error: programmeCopyError } = await client.functions.invoke("google-drive-oauth", {
-              body: { action: "get-client-copy", onboarding_id: onboarding.id }
-            });
-            if (programmeCopyError) throw programmeCopyError;
-            if (programmeCopy?.copy?.drive_file_url) {
-              programmeAccessLink.href = programmeCopy.copy.drive_file_url;
-              programmeAccessLink.hidden = false;
-              programmeAccessMessage && (programmeAccessMessage.textContent = "Your coach will also email you a copy, but you can open your programme here whenever you need it.");
-            } else if (programmeAccessMessage) {
-              programmeAccessMessage.textContent = "Your coach will email you your personalised programme once it has been shared. If you have not received it, please get in touch.";
+            try {
+              const { data: programmeCopy, error: programmeCopyError } = await client.functions.invoke("google-drive-oauth", {
+                body: { action: "get-client-copy", onboarding_id: onboarding.id }
+              });
+              if (programmeCopyError) throw programmeCopyError;
+              if (programmeCopy?.copy?.drive_file_url) {
+                programmeAccessLink.href = programmeCopy.copy.drive_file_url;
+                programmeAccessLink.hidden = false;
+                programmeAccessMessage && (programmeAccessMessage.textContent = "Your coach will also email you a copy, but you can open your programme here whenever you need it.");
+              } else if (programmeAccessMessage) {
+                programmeAccessMessage.textContent = "Your coach will email you your personalised programme once it has been shared. If you have not received it, please get in touch.";
+              }
+            } catch (programmeLinkError) {
+              console.error("Could not load the client programme link:", programmeLinkError);
+              if (programmeAccessMessage) programmeAccessMessage.textContent = "Your coach will also email you a copy of your personalised programme. If you would like to open it here, please try again shortly.";
             }
           }
         }
