@@ -128,17 +128,17 @@ Deno.serve(async (req) => {
       }
 
       const nameCellResponse = await fetch(
-        "https://sheets.googleapis.com/v4/spreadsheets/" + fileId + "/values/" + encodeURIComponent("'Programme'!A5") + "?valueInputOption=USER_ENTERED",
+        "https://sheets.googleapis.com/v4/spreadsheets/" + fileId + "/values/" + encodeURIComponent("'Programme'!B5") + "?valueInputOption=USER_ENTERED",
         {
           method: "PUT",
           headers: { Authorization: "Bearer " + accessToken, "Content-Type": "application/json" },
-          body: JSON.stringify({ range: "'Programme'!A5", majorDimension: "ROWS", values: [[clientName]] }),
+          body: JSON.stringify({ range: "'Programme'!B5", majorDimension: "ROWS", values: [[clientName]] }),
         },
       );
       const nameCellResult = await nameCellResponse.json();
       if (!nameCellResponse.ok) {
-        console.error("Could not write client name into Programme!A5:", nameCellResult.error?.message || nameCellResponse.status);
-        return reply("The spreadsheet was created, but the client name could not be added to Programme!A5: " + (nameCellResult.error?.message || nameCellResponse.status), 500);
+        console.error("Could not write client name into Programme!B5:", nameCellResult.error?.message || nameCellResponse.status);
+        return reply("The spreadsheet was created, but the client name could not be added to Programme!B5: " + (nameCellResult.error?.message || nameCellResponse.status), 500);
       }
 
       if (!existing?.drive_file_id) {
