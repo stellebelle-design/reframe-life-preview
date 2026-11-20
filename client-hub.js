@@ -935,12 +935,12 @@ window.reframeGetClientNames = async function(userIds){
         .order("submitted_at",{ascending:false});
       if(error)throw error;
       if(!forms?.length){status.textContent="No submitted questionnaires yet.";return;}
-      const ids=[...new Set(forms.map(x=>x.user_id).filter(Boolean))];
-      const {data:access,error:accessError}=await client.from("client_access").select("user_id,status").in("user_id",ids);
-      if(accessError)throw accessError;
-      const active=new Set((access||[]).filter(x=>x.status==="active").map(x=>x.user_id));
-      const visible=forms.filter(x=>active.has(x.user_id));
-      if(!visible.length){status.textContent="No submitted questionnaires for active client accounts.";return;}
+      // client_onboarding is already protected by the verified-admin RLS policy.
+      // Do not filter it through client_access: that table's RLS can expose only
+      // the signed-in admin's own row and incorrectly hide other active clients.
+      const visible=forms;
+      if(!visible.length){status.textContent="No submitted questionnaires yet.";return;}
+      const ids=[...new Set(visible.map(x=>x.user_id).filter(Boolean))];
       const displayNames=await window.reframeGetClientNames(ids);
       status.textContent=visible.length+" submitted programme"+(visible.length===1?"":"s")+" to review.";
       for(const item of visible){
