@@ -1159,6 +1159,7 @@ window.reframeGetClientNames = async function(userIds){
       {title:"Recipes & resources",nodes:[recipeForm,recipeList]},
       {title:"Weekly client check-ins",selector:".checkin-admin-wrap",button:"Load check-ins"},
       {title:"Four-week progress reviews",selector:".progress-review-admin-wrap",button:"Load reviews"},
+      {title:"Coaching overview",selector:".coaching-overview-wrap",button:"Load clients"},
       {title:"Programme preparation",selector:".programme-readiness-wrap",button:"Load clients"},
       {title:"Client questionnaires",selector:".onboarding-admin-wrap",button:"Load submissions"},
       {title:"Coaching end dates & data retention",selector:".client-retention-admin-wrap",button:"Load client dates"}
