@@ -444,3 +444,8 @@
 .client-programme-access{margin-top:14px;background:#f7f3ee;border:1px solid #e8ded2}
 .client-programme-access h3{font-family:var(--serif);font-weight:500}
 .client-programme-access .dashboard-link{display:inline-flex;margin-top:8px}
+
+
+/* At-a-glance programme preparation status in the admin client list */
+.programme-status-badge{display:inline-flex;align-items:center;justify-content:center;width:max-content;padding:5px 9px;border-radius:999px;font:600 .62rem var(--sans);letter-spacing:.07em;white-space:nowrap;background:#eee7da;color:#74634e}
+.programme-status-badge[data-state="ready"]{background:#e6eee5;color:#536b50}
