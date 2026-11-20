@@ -1103,10 +1103,14 @@ window.reframeGetClientNames = async function(userIds){
             if(!startInput.value){startMessage.textContent="Please choose the day the client actually begins.";return;}
             saveStart.disabled=true;startMessage.textContent="Saving…";
             try{
-              const {error:saveError}=await client.from("client_programme_schedules").upsert({user_id:item.user_id,programme_start_date:startInput.value,updated_at:new Date().toISOString()},{onConflict:"user_id"});
+              const {data:savedSchedule,error:saveError}=await client.from("client_programme_schedules").upsert({user_id:item.user_id,programme_start_date:startInput.value,updated_at:new Date().toISOString()},{onConflict:"user_id"}).select("user_id,programme_start_date").single();
               if(saveError)throw saveError;
-              startMessage.textContent="Start date saved. Weekly and four-week timings will use this date.";
+              if(!savedSchedule||savedSchedule.user_id!==item.user_id||savedSchedule.programme_start_date!==startInput.value){
+                throw new Error("The database did not confirm the programme start date. Please refresh and try again.");
+              }
+              startMessage.textContent="Saved and verified. The coaching overview will use this start date to calculate the six-month timeline and review milestones.";
               saveStart.textContent="Update start date";
+              if(typeof window.loadAdminCoachingOverview==="function")window.loadAdminCoachingOverview();
             }catch(error){console.error("Could not save programme start date:",error);startMessage.textContent="We couldn't save the date. Please try again.";}
             finally{saveStart.disabled=false;}
           });
