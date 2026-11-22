@@ -119,7 +119,26 @@
       if(error)throw error;
       if(!data?.length){status.textContent="No weekly check-ins have been submitted yet.";return;}
       const clientNames=await window.reframeGetClientNames(data.map(item=>item.user_id));
+      // Ensure every unanswered check-in is mirrored into the central task list
+      // using the same rows that are successfully displayed in this admin viewer.
+      const unanswered=data.filter(item=>!String(item.coach_feedback||"").trim());
+      for(const item of unanswered){
+        const sourceKey="weekly-checkin-feedback:"+item.id;
+        const clientName=clientNames.get(item.user_id)||"client";
+        const dueDate=new Date().toISOString().slice(0,10);
+        const {error:taskError}=await client.from("admin_tasks").upsert({
+          source_key:sourceKey,
+          task_type:"workflow",
+          title:"Respond to "+clientName+"'s weekly check-in",
+          category:"Client follow-up",
+          details:"A weekly check-in is waiting for your supportive feedback. Open Weekly client check-ins, review their answers and save your response.",
+          user_id:item.user_id,
+          due_date:dueDate
+        },{onConflict:"source_key",ignoreDuplicates:true});
+        if(taskError)throw taskError;
+      }
       status.textContent=data.length+" check-in"+(data.length===1?"":"s")+" found.";
+      if(unanswered.length&&window.loadAdminTasks)await window.loadAdminTasks();
       data.forEach(item=>{
         const details=document.createElement("details");details.className="onboarding-submission";
         const summary=document.createElement("summary");
