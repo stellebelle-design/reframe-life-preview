@@ -336,7 +336,6 @@
       const {data:reviews,error}=await client.from("client_progress_reviews").select("period_start,period_end,progress_summary,wins,challenges,next_goals,coach_feedback,updated_at").eq("user_id",userId).order("period_start",{ascending:false}).limit(12);if(error)throw error;
       const {data:reflections,error:reflectionError}=await client.from("client_progress_reflections").select("period_start,what_went_well,proud_of,challenging,next_focus,updated_at").eq("user_id",userId);if(reflectionError)throw reflectionError;
       const {data:schedule,error:scheduleError}=await client.from("client_programme_schedules").select("programme_start_date").eq("user_id",userId).maybeSingle();if(scheduleError)throw scheduleError;
-      const now=new Date(),today=[now.getFullYear(),String(now.getMonth()+1).padStart(2,"0"),String(now.getDate()).padStart(2,"0")].join("-"),isSunday=now.getDay()===0;
       const programmeStart=schedule?.programme_start_date||"";
       const visibleReviews=(reviews||[]).filter(r=>!programmeStart||r.period_start>=programmeStart);
       const visibleReflections=(reflections||[]).filter(r=>!programmeStart||r.period_start>=programmeStart);
@@ -344,8 +343,6 @@
       if(!visibleReviews.length){list.textContent="Your four-week reviews will appear here when your coach shares them.";return;}
       visibleReviews.forEach(r=>{
         const reflection=byPeriod.get(r.period_start)||{};
-        const isDue=isSunday && !!schedule?.programme_start_date && today>=r.period_end && today>=schedule.programme_start_date;
-        if(!isDue && !reflection.updated_at)return;
         const card=document.createElement("article");card.className="checkin-history-card progress-review-card";
         const fmt=d=>new Date(d+"T12:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
         const toggle=document.createElement("button");toggle.type="button";toggle.className="progress-review-toggle";toggle.setAttribute("aria-expanded","false");
