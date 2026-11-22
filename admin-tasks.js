@@ -146,8 +146,22 @@
   const {data:existing,error:existingError}=await db.from("admin_tasks").select("id,source_key,status").eq("task_type","workflow");
   if(existingError)throw existingError;
   for(const [key,task] of desired){
-   const {error}=await db.from("admin_tasks").upsert({...task,task_type:"workflow"},{onConflict:"source_key",ignoreDuplicates:true});
-   if(error)throw error;
+   const prior=(existing||[]).find(row=>row.source_key===key);
+   if(prior){
+    // If the underlying client action is still outstanding, never leave its
+    // workflow reminder completed. Reopen it and refresh its details.
+    const {error}=await db.from("admin_tasks").update({
+     ...task,
+     task_type:"workflow",
+     status:"open",
+     completed_at:null,
+     updated_at:new Date().toISOString()
+    }).eq("id",prior.id);
+    if(error)throw error;
+   }else{
+    const {error}=await db.from("admin_tasks").insert({...task,task_type:"workflow"});
+    if(error)throw error;
+   }
   }
   const obsolete=(existing||[]).filter(task=>task.source_key&&!desired.has(task.source_key)&&task.status==="open");
   for(const task of obsolete){
