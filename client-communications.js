@@ -1,0 +1,134 @@
+/* Admin-only client communication task tracker. RLS is enforced by Supabase. */
+(function initialiseClientCommunications(){
+  const client=window.reframeSupabaseClient;
+  const root=document.querySelector("#clientCommunicationsList");
+  const status=document.querySelector("#clientCommunicationsMessage");
+  const refresh=document.querySelector("#refreshClientCommunications");
+  const form=document.querySelector("#clientCommunicationForm");
+  const clientSelect=document.querySelector("#communicationClient");
+  const typeSelect=document.querySelector("#communicationType");
+  const detailsInput=document.querySelector("#communicationDetails");
+  const saveButton=document.querySelector("#saveCommunicationTask");
+  const formMessage=document.querySelector("#communicationFormMessage");
+  if(!client||!root||!status||!form||!clientSelect)return;
+
+  const make=(tag,cls,text)=>{const el=document.createElement(tag);if(cls)el.className=cls;if(text!==undefined)el.textContent=text;return el;};
+  const dateLabel=value=>value?new Date(value).toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"}):"";
+  let clientNames=new Map();
+
+  async function loadClients(){
+    const {data,error}=await client.from("client_access").select("user_id,status").order("user_id");
+    if(error)throw error;
+    const active=(data||[]).filter(item=>item.user_id&&item.status==="active");
+    clientNames=await window.reframeGetClientNames(active.map(item=>item.user_id));
+    const previous=clientSelect.value;
+    clientSelect.replaceChildren(make("option",null,"Choose a client"));
+    active.forEach(item=>{
+      const option=make("option",null,clientNames.get(item.user_id)||"Client");
+      option.value=item.user_id;clientSelect.append(option);
+    });
+    if(active.some(item=>item.user_id===previous))clientSelect.value=previous;
+  }
+
+  function renderTask(item){
+    const card=make("article","communication-task");
+    const top=make("div","communication-task-top");
+    const info=make("div","communication-task-info");
+    info.append(make("strong",null,clientNames.get(item.user_id)||"Client"));
+    info.append(make("span","communication-task-type",item.communication_type));
+    top.append(info,make("span","communication-task-status",item.status==="sent"?"SENT":"TO DO"));
+    card.append(top);
+    if(item.details)card.append(make("p","communication-task-details",item.details));
+    const meta=make("small","communication-task-date",
+      item.status==="sent"?"Sent "+dateLabel(item.sent_at):"Added "+dateLabel(item.created_at));
+    card.append(meta);
+    const actions=make("div","communication-task-actions");
+    const toggle=make("button","admin-row-button",item.status==="sent"?"Reopen task":"Mark as sent");
+    toggle.type="button";
+    toggle.addEventListener("click",async()=>{
+      toggle.disabled=true;toggle.textContent="Saving…";
+      try{
+        const next=item.status==="sent"?"pending":"sent";
+        const {error}=await client.from("client_communication_tasks")
+          .update({status:next,sent_at:next==="sent"?new Date().toISOString():null})
+          .eq("id",item.id);
+        if(error)throw error;
+        await load();
+      }catch(error){
+        console.error("Could not update communication task:",error);
+        status.textContent="We couldn't update that message. Please try again.";
+        toggle.disabled=false;toggle.textContent=item.status==="sent"?"Reopen task":"Mark as sent";
+      }
+    });
+    const remove=make("button","admin-cancel","Delete");
+    remove.type="button";
+    remove.addEventListener("click",async()=>{
+      if(!window.confirm("Delete this communication task?"))return;
+      remove.disabled=true;
+      try{
+        const {error}=await client.from("client_communication_tasks").delete().eq("id",item.id);
+        if(error)throw error;
+        await load();
+      }catch(error){
+        console.error("Could not delete communication task:",error);
+        status.textContent="We couldn't delete that task. Please try again.";
+        remove.disabled=false;
+      }
+    });
+    actions.append(toggle,remove);card.append(actions);
+    return card;
+  }
+
+  async function load(){
+    status.textContent="Loading communication tasks…";root.replaceChildren();
+    if(refresh)refresh.disabled=true;
+    try{
+      await loadClients();
+      const {data,error}=await client.from("client_communication_tasks")
+        .select("id,user_id,communication_type,details,status,created_at,sent_at")
+        .order("created_at",{ascending:false});
+      if(error)throw error;
+      const tasks=data||[];
+      const pending=tasks.filter(item=>item.status==="pending");
+      const sent=tasks.filter(item=>item.status==="sent");
+      status.textContent=tasks.length+" message task"+(tasks.length===1?"":"s")+" · "+pending.length+" outstanding · "+sent.length+" sent";
+      const pendingSection=make("section","communication-task-group");
+      pendingSection.append(make("h4",null,"To do"));
+      if(pending.length)pending.forEach(item=>pendingSection.append(renderTask(item)));
+      else pendingSection.append(make("p","communication-empty","Nothing outstanding. You're all caught up."));
+      root.append(pendingSection);
+      const sentSection=make("details","communication-sent-group");
+      const summary=make("summary",null,"Sent messages ("+sent.length+")");
+      sentSection.append(summary);
+      if(sent.length)sent.forEach(item=>sentSection.append(renderTask(item)));
+      else sentSection.append(make("p","communication-empty","Messages you mark as sent will appear here."));
+      root.append(sentSection);
+    }catch(error){
+      console.error("Could not load communication tasks:",error);
+      status.textContent="We couldn't load the communications tracker. Please check the database setup and admin access.";
+    }finally{if(refresh)refresh.disabled=false;}
+  }
+
+  form.addEventListener("submit",async event=>{
+    event.preventDefault();
+    formMessage.textContent="";
+    if(!clientSelect.value){formMessage.textContent="Please choose a client.";return;}
+    saveButton.disabled=true;saveButton.textContent="Adding…";
+    try{
+      const {error}=await client.from("client_communication_tasks").insert({
+        user_id:clientSelect.value,
+        communication_type:typeSelect.value,
+        details:detailsInput.value.trim()
+      });
+      if(error)throw error;
+      detailsInput.value="";
+      formMessage.textContent="Message task added.";
+      await load();
+    }catch(error){
+      console.error("Could not add communication task:",error);
+      formMessage.textContent="We couldn't add that task. Please check the database setup and try again.";
+    }finally{saveButton.disabled=false;saveButton.textContent="Add to to-do list";}
+  });
+  refresh?.addEventListener("click",load);
+  window.loadAdminCommunications=load;
+})();
