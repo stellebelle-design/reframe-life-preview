@@ -133,8 +133,11 @@
           category:"Client follow-up",
           details:"A weekly check-in is waiting for your supportive feedback. Open Weekly client check-ins, review their answers and save your response.",
           user_id:item.user_id,
-          due_date:dueDate
-        },{onConflict:"source_key",ignoreDuplicates:true});
+          due_date:dueDate,
+          status:"open",
+          completed_at:null,
+          updated_at:new Date().toISOString()
+        },{onConflict:"source_key"});
         if(taskError)throw taskError;
       }
       status.textContent=data.length+" check-in"+(data.length===1?"":"s")+" found.";
