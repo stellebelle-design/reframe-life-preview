@@ -96,7 +96,7 @@
    db.from("client_programme_schedules").select("user_id,programme_start_date"),
    db.from("client_progress_reviews").select("user_id,period_start,period_end,reflection_reviewed_at"),
    db.from("client_progress_reflections").select("user_id,period_start"),
-   db.from("client_checkins").select("user_id,week_start")
+   db.from("client_checkins").select("id,user_id,week_start,coach_feedback")
   ]);
   if(scheduleError)throw scheduleError;if(reviewError)throw reviewError;if(reflectionError)throw reflectionError;if(checkinError)throw checkinError;
 
@@ -126,6 +126,13 @@
     const hasCheckins=(checkins||[]).some(x=>x.user_id===uid&&x.week_start>=start&&x.week_start<=due);
     const key="progress-review-due:"+uid+":"+start;
     desired.set(key,{source_key:key,title:(hasCheckins?"Prepare ":"Check ")+(clientNames.get(uid)||"client")+"'s four-week review",category:"Progress review",details:hasCheckins?"Weekly check-ins are available for this review period. Prepare and share the four-week progress review.":"The four-week review period has ended. Check in with the client and prepare their progress review.",user_id:uid,due_date:due});
+   }
+  });
+
+  (checkins||[]).forEach(item=>{
+   if(!String(item.coach_feedback||"").trim()){
+    const key="weekly-checkin-feedback:"+item.id;
+    desired.set(key,{source_key:key,title:"Respond to "+(clientNames.get(item.user_id)||"client")+"'s weekly check-in",category:"Client follow-up",details:"A weekly check-in is waiting for your supportive feedback. Open Weekly client check-ins, review their answers and save your response.",user_id:item.user_id,due_date:todayKey});
    }
   });
 
