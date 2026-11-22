@@ -35,6 +35,11 @@
   actions.append(edit,remove);row.append(check,main,actions);return row;
  }
  async function updateStatus(task,next){
+  if(task.task_type==="workflow"&&task.source_key?.startsWith("communication:")){
+   const communicationId=task.source_key.slice("communication:".length);
+   const {error:communicationError}=await db.from("client_communication_tasks").update({status:next==="completed"?"sent":"pending",sent_at:next==="completed"?new Date().toISOString():null}).eq("id",communicationId);
+   if(communicationError){status.textContent="Could not update the communication tracker. Please try again.";await load();return;}
+  }
   const patch={status:next,completed_at:next==="completed"?new Date().toISOString():null,updated_at:new Date().toISOString()};
   const {error}=await db.from("admin_tasks").update(patch).eq("id",task.id);
   if(error){status.textContent="Couldn't update that task. Please refresh and try again.";await load();return;}await load();
@@ -122,6 +127,13 @@
     const key="progress-review-due:"+uid+":"+start;
     desired.set(key,{source_key:key,title:(hasCheckins?"Prepare":"Check")+(clientNames.get(uid)||"client")+"'s four-week review",category:"Progress review",details:hasCheckins?"Weekly check-ins are available for this review period. Prepare and share the four-week progress review.":"The four-week review period has ended. Check in with the client and prepare their progress review.",user_id:uid,due_date:due});
    }
+  });
+
+  const {data:communications,error:communicationsError}=await db.from("client_communication_tasks").select("id,user_id,communication_type,details,created_at").eq("status","pending");
+  if(communicationsError)throw communicationsError;
+  (communications||[]).forEach(item=>{
+   const key="communication:"+item.id;
+   desired.set(key,{source_key:key,title:"Send "+item.communication_type.toLowerCase()+" to "+(clientNames.get(item.user_id)||"client"),category:"Communication",details:item.details||"A client message is waiting to be sent. Mark it as sent once you have sent it.",user_id:item.user_id,due_date:null});
   });
 
   const {data:existing,error:existingError}=await db.from("admin_tasks").select("id,source_key,status").eq("task_type","workflow");
