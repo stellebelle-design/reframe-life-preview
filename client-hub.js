@@ -426,6 +426,7 @@
     if (adminRecord && window.loadAdminProgrammeReadiness) await window.loadAdminProgrammeReadiness();
     if (adminRecord && window.loadAdminClientRetention) await window.loadAdminClientRetention();
     if (adminRecord && window.loadAdminCoachingOverview) await window.loadAdminCoachingOverview();
+    if (adminRecord && window.loadAdminCommunications) await window.loadAdminCommunications();
     return true;
   }
 
