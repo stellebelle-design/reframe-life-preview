@@ -125,7 +125,7 @@
    if(todayKey>=due){
     const hasCheckins=(checkins||[]).some(x=>x.user_id===uid&&x.week_start>=start&&x.week_start<=due);
     const key="progress-review-due:"+uid+":"+start;
-    desired.set(key,{source_key:key,title:(hasCheckins?"Prepare":"Check")+(clientNames.get(uid)||"client")+"'s four-week review",category:"Progress review",details:hasCheckins?"Weekly check-ins are available for this review period. Prepare and share the four-week progress review.":"The four-week review period has ended. Check in with the client and prepare their progress review.",user_id:uid,due_date:due});
+    desired.set(key,{source_key:key,title:(hasCheckins?"Prepare ":"Check ")+(clientNames.get(uid)||"client")+"'s four-week review",category:"Progress review",details:hasCheckins?"Weekly check-ins are available for this review period. Prepare and share the four-week progress review.":"The four-week review period has ended. Check in with the client and prepare their progress review.",user_id:uid,due_date:due});
    }
   });
 
