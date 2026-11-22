@@ -47,7 +47,7 @@
  async function load(){
   status.textContent="";root.replaceChildren();completedRoot.replaceChildren();summary.textContent="Loading your tasks…";
   try{
-   const {data,error}=await db.from("admin_tasks").select("id,task_type,title,category,details,user_id,due_date,status,created_at,completed_at").order("created_at",{ascending:false});
+   const {data,error}=await db.from("admin_tasks").select("id,task_type,source_key,title,category,details,user_id,due_date,status,created_at,completed_at").order("created_at",{ascending:false});
    if(error)throw error;
    const tasks=data||[],open=tasks.filter(x=>x.status==="open"),done=tasks.filter(x=>x.status==="completed");
    open.sort((a,b)=>(a.due_date||"9999").localeCompare(b.due_date||"9999")||b.created_at.localeCompare(a.created_at));
