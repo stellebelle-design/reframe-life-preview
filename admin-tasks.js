@@ -68,5 +68,78 @@
   finally{save.disabled=false;save.textContent="Save task";}
  });
  $("adminCompletedCount").textContent="(0)";
- window.loadAdminTasks=async()=>{await loadClients();await load();};
+ async function syncWorkflowTasks(){
+  const todayDate= new Date();
+  const todayKey=[todayDate.getFullYear(),String(todayDate.getMonth()+1).padStart(2,"0"),String(todayDate.getDate()).padStart(2,"0")].join("-");
+  const {data:forms,error:formsError}=await db.from("client_onboarding").select("id,user_id,purchase_id,product_key,submitted_at");
+  if(formsError)throw formsError;
+  const {data:readiness,error:readinessError}=await db.from("client_programme_readiness").select("purchase_id,is_ready");
+  if(readinessError)throw readinessError;
+  const readyPurchases=new Set((readiness||[]).filter(x=>x.is_ready).map(x=>x.purchase_id));
+  const desired=new Map();
+  (forms||[]).forEach(form=>{
+   if(!readyPurchases.has(form.purchase_id)){
+    const key="programme-preparation:"+form.id;
+    desired.set(key,{source_key:key,title:"Prepare "+(clientNames.get(form.user_id)||"client")+"'s programme",category:"Programme preparation",details:"A client questionnaire has been submitted. Review their answers and prepare their personalised programme.",user_id:form.user_id,due_date:null});
+   }
+  });
+
+  const {data:access,error:accessError}=await db.from("client_access").select("user_id,status").eq("status","active");
+  if(accessError)throw accessError;
+  const activeIds=[...new Set((access||[]).map(x=>x.user_id).filter(Boolean))];
+  const [{data:schedules,error:scheduleError},{data:reviews,error:reviewError},{data:reflections,error:reflectionError},{data:checkins,error:checkinError}]=await Promise.all([
+   db.from("client_programme_schedules").select("user_id,programme_start_date"),
+   db.from("client_progress_reviews").select("user_id,period_start,period_end,reflection_reviewed_at"),
+   db.from("client_progress_reflections").select("user_id,period_start"),
+   db.from("client_checkins").select("user_id,week_start")
+  ]);
+  if(scheduleError)throw scheduleError;if(reviewError)throw reviewError;if(reflectionError)throw reflectionError;if(checkinError)throw checkinError;
+
+  const dateOnly=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
+  const periodEndFor=start=>{
+   const end=new Date(start+"T12:00:00");end.setDate(end.getDate()+27);
+   while(end.getDay()!==0)end.setDate(end.getDate()+1);
+   return dateOnly(end);
+  };
+  activeIds.forEach(uid=>{
+   const clientReviews=(reviews||[]).filter(x=>x.user_id===uid).sort((a,b)=>b.period_start.localeCompare(a.period_start));
+   const latest=clientReviews[0];
+   if(latest){
+    const reflection=(reflections||[]).find(x=>x.user_id===uid&&x.period_start===latest.period_start);
+    if(reflection&&!latest.reflection_reviewed_at){
+     const key="progress-reflection:"+uid+":"+latest.period_start;
+     desired.set(key,{source_key:key,title:"Review "+(clientNames.get(uid)||"client")+"'s reflection",category:"Progress review",details:"Their four-week reflection has arrived. Read their answers and mark the review as completed in Four-week progress reviews.",user_id:uid,due_date:todayKey});
+     return;
+    }
+    if(!reflection)return; // The client still needs to submit their reflection.
+    if(!latest.reflection_reviewed_at)return;
+   }
+   const start=latest?.period_end?(()=>{const d=new Date(latest.period_end+"T12:00:00");d.setDate(d.getDate()+1);return dateOnly(d);})():(schedules||[]).find(x=>x.user_id===uid)?.programme_start_date;
+   if(!start)return;
+   const due=periodEndFor(start);
+   if(todayKey>=due){
+    const hasCheckins=(checkins||[]).some(x=>x.user_id===uid&&x.week_start>=start&&x.week_start<=due);
+    const key="progress-review-due:"+uid+":"+start;
+    desired.set(key,{source_key:key,title:(hasCheckins?"Prepare":"Check")+(clientNames.get(uid)||"client")+"'s four-week review",category:"Progress review",details:hasCheckins?"Weekly check-ins are available for this review period. Prepare and share the four-week progress review.":"The four-week review period has ended. Check in with the client and prepare their progress review.",user_id:uid,due_date:due});
+   }
+  });
+
+  const {data:existing,error:existingError}=await db.from("admin_tasks").select("id,source_key,status").eq("task_type","workflow");
+  if(existingError)throw existingError;
+  for(const [key,task] of desired){
+   const {error}=await db.from("admin_tasks").upsert({...task,task_type:"workflow"},{onConflict:"source_key",ignoreDuplicates:true});
+   if(error)throw error;
+  }
+  const obsolete=(existing||[]).filter(task=>task.source_key&&!desired.has(task.source_key)&&task.status==="open");
+  for(const task of obsolete){
+   const {error}=await db.from("admin_tasks").update({status:"completed",completed_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq("id",task.id);
+   if(error)throw error;
+  }
+ }
+ window.loadAdminTasks=async()=>{
+  await loadClients();
+  try{await syncWorkflowTasks();}
+  catch(error){console.error("Could not sync workflow tasks:",error);status.textContent="Your saved tasks are available, but automatic workflow reminders could not refresh. Please check the admin task setup."; }
+  await load();
+ };
 })();
