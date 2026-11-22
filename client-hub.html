@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Jost:wght@300;400;500;600&family=Petit+Formal+Script&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="client-hub.css?v=20261122-communications-1">
+  <link rel="stylesheet" href="client-hub.css?v=20261122-task-centre-1">
 <style>
 .sidebar-view-switch{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:0 0 18px;padding:4px;background:#f3eee9;border-radius:12px}
 .sidebar-view-switch button{border:0;background:transparent;border-radius:9px;padding:9px 8px;font-family:var(--serif);font-size:16px;font-weight:500;letter-spacing:.015em;line-height:1.2;color:#625b55;cursor:pointer;transition:background .2s,color .2s,box-shadow .2s}
@@ -152,6 +152,13 @@
           <div><p class="eyebrow">PRIVATE ADMIN AREA</p><h2>Your admin <em>workspace.</em></h2><p class="section-intro">Everything you need to look after Reframe Life, gathered into simple sections. Open only what you need.</p></div>
           <span class="admin-tag">ADMIN ONLY</span>
         </div>
+        <section class="admin-task-centre" id="adminTaskCentre">
+          <div class="admin-task-centre-heading"><div><p class="eyebrow">YOUR DAILY OVERVIEW</p><h3>My tasks</h3><p>One place for client actions, follow-ups and the little things you want to remember.</p></div><button type="button" class="admin-save" id="openAdminTaskEditor">+ Add a task</button></div>
+          <div class="admin-task-summary" id="adminTaskSummary">Loading your tasks…</div>
+          <div id="adminTaskList" class="admin-task-list"></div>
+          <details class="admin-completed-tasks"><summary>Completed tasks <span id="adminCompletedCount">(0)</span></summary><div id="adminCompletedTaskList"></div></details>
+          <p id="adminTaskMessage" class="admin-status" role="status" aria-live="polite"></p>
+        </section>
         <nav class="admin-workspace-nav" aria-label="Admin workspace shortcuts">
           <p class="admin-workspace-nav-label">QUICK ACCESS</p>
           <a href="#adminProgressReviews">Progress reviews <span>↗</span></a>
@@ -277,6 +284,19 @@
     <footer class="hub-footer"><a class="brand" href="index.html">reframe <em>life</em></a><span>© 2026 Reframe Life Coaching</span><span><a href="privacy.html">Privacy Policy</a> · <a href="terms.html">Terms &amp; Conditions</a></span><a href="index.html">Return to the main website</a></footer>
   </div>
 
+  <dialog class="admin-task-dialog" id="adminTaskDialog" aria-labelledby="adminTaskDialogTitle">
+    <button class="dialog-close" id="closeAdminTaskEditor" type="button" aria-label="Close task editor">×</button>
+    <p class="eyebrow">YOUR TASK LIST</p><h2 id="adminTaskDialogTitle">Add a task</h2>
+    <form id="adminTaskForm" class="admin-task-form">
+      <input type="hidden" id="adminTaskId">
+      <label>Task title<input id="adminTaskTitle" maxlength="180" required placeholder="e.g. Prepare Sarah's programme"></label>
+      <label>Client (optional)<select id="adminTaskClient"><option value="">General task — no client</option></select></label>
+      <label>Category<select id="adminTaskCategory"><option>Programme preparation</option><option>Progress review</option><option>Client follow-up</option><option>Communication</option><option>Business admin</option><option>Other</option></select></label>
+      <label>Due date (optional)<input id="adminTaskDue" type="date"></label>
+      <label>Notes (optional)<textarea id="adminTaskDetails" rows="3" maxlength="2000" placeholder="Add any details you want to remember…"></textarea></label>
+      <div class="admin-task-dialog-actions"><button type="submit" class="admin-save" id="saveAdminTask">Save task</button><button type="button" class="admin-cancel" id="cancelAdminTaskEditor">Cancel</button><p id="adminTaskFormMessage" role="status" aria-live="polite"></p></div>
+    </form>
+  </dialog>
   <dialog class="recipe-dialog" id="recipeDialog" aria-labelledby="dialogTitle">
     <button class="dialog-close" id="dialogClose" aria-label="Close recipe">×</button>
     <p class="eyebrow" id="dialogCategory">RECIPE</p><h2 id="dialogTitle">Recipe title</h2><p id="dialogDescription" class="dialog-description"></p>
@@ -285,8 +305,9 @@
   </dialog>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
-  <script src="client-hub.js?v=20261122-communications-1"></script>
+  <script src="client-hub.js?v=20261122-task-centre-1"></script>
   <script src="client-communications.js?v=20261122-1"></script>
+  <script src="admin-tasks.js?v=20261122-1"></script>
   <script src="admin-onboarding.js?v=20261122-reflection-status-1"></script>
   <script src="google-drive-picker.js?v=20261119-master-direct"></script>
 </body>
