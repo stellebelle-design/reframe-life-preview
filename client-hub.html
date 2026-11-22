@@ -158,6 +158,7 @@
           <a href="#adminCoachingOverview">Coaching overview <span>↗</span></a>
           <a href="#adminProgrammeReadiness">Programme readiness <span>↗</span></a>
           <a href="#adminWeeklyCheckins">Weekly check-ins <span>↗</span></a>
+          <a href="#adminCommunications">Communications <span>↗</span></a>
           <a href="#adminQuestionnaires">Questionnaires <span>↗</span></a>
           <a href="#adminDataRetention">Data retention <span>↗</span></a>
         </nav>
@@ -195,6 +196,17 @@
           <div class="admin-submissions-heading"><div><h3>Programme readiness</h3><p class="section-intro">Mark a client's programme as ready once you've finished preparing and shared it with them.</p></div><button type="button" class="admin-row-button" id="refreshProgrammeReadiness">Refresh clients</button></div>
           <p id="programmeReadinessMessage" class="admin-status" role="status" aria-live="polite">Client questionnaires will appear here.</p>
           <div id="programmeReadinessList" class="onboarding-admin-list"></div>
+        </div>
+        <div class="admin-list-wrap client-communications-wrap" id="adminCommunications">
+          <div class="admin-submissions-heading"><div><h3>Client communications</h3><p class="section-intro">Keep track of welcome messages, programme emails, progress follow-ups and coaching end messages.</p></div><button type="button" class="admin-row-button" id="refreshClientCommunications">Refresh tasks</button></div>
+          <form id="clientCommunicationForm" class="communication-form">
+            <label>Client<select id="communicationClient" required><option value="">Loading clients…</option></select></label>
+            <label>Message type<select id="communicationType" required><option>Welcome message</option><option>Programme email</option><option>Progress review follow-up</option><option>Coaching ending message</option><option>Other</option></select></label>
+            <label class="communication-details-field">What do you need to send?<textarea id="communicationDetails" rows="2" maxlength="1000" placeholder="A short reminder of what the message needs to include…"></textarea></label>
+            <div class="communication-form-actions"><button type="submit" class="admin-save" id="saveCommunicationTask">Add to to-do list</button><p id="communicationFormMessage" role="status" aria-live="polite"></p></div>
+          </form>
+          <p id="clientCommunicationsMessage" class="admin-status" role="status" aria-live="polite">Your communication tasks will appear here.</p>
+          <div id="clientCommunicationsList"></div>
         </div>
         <div class="admin-list-wrap client-retention-admin-wrap" id="adminDataRetention">
           <div class="admin-submissions-heading"><div><h3>Coaching end dates &amp; data retention</h3><p class="section-intro">When a client's coaching has actually ended, record the date here. Their coaching information is then due for secure deletion six months later. Payment and accounting records are kept separately.</p></div><button type="button" class="admin-row-button" id="refreshClientRetentionAdmin">Refresh clients</button></div>
@@ -273,7 +285,8 @@
   </dialog>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
-  <script src="client-hub.js?v=20261122-shared-reviews-1"></script>
+  <script src="client-hub.js?v=20261122-communications-1"></script>
+  <script src="client-communications.js?v=20261122-1"></script>
   <script src="admin-onboarding.js?v=20261122-reflection-status-1"></script>
   <script src="google-drive-picker.js?v=20261119-master-direct"></script>
 </body>
