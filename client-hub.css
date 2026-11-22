@@ -484,14 +484,18 @@
 .progress-review-queue{margin:0 0 22px;padding:18px;border:1px solid rgba(156,141,116,.25);border-radius:13px;background:#f8f5ef}
 .progress-review-queue h3{margin:0 0 12px;font:500 1.2rem var(--serif);color:var(--ink)}
 .progress-review-queue-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:14px;padding:12px 0;border-top:1px solid rgba(156,141,116,.18)}
+.progress-review-queue-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.progress-review-queue-actions .admin-row-button{padding:8px 11px;font-size:.68rem;white-space:nowrap}
 .progress-review-queue-info{display:grid;gap:3px;min-width:0}
 .progress-review-queue-info strong{font-size:.84rem;color:var(--ink)}
 .progress-review-queue-info small{font-size:.7rem;line-height:1.45;color:var(--ink-soft)}
 .progress-review-queue-badge{display:inline-flex;width:max-content;padding:5px 9px;border-radius:999px;background:#eee7da;color:#74634e;font:600 .59rem var(--sans);letter-spacing:.06em;white-space:nowrap}
 .progress-review-queue-badge[data-state="awaiting"]{background:#f5e8d7;color:#89643f}
+.progress-review-queue-badge[data-state="awaiting-reflection"]{background:#f5e8d7;color:#89643f}
+.progress-review-queue-badge[data-state="reflection-received"]{background:#e8eee5;color:#536b50}
 .progress-review-queue-badge[data-state="due"]{background:#f3e2df;color:#94594f}
 .progress-review-queue-badge[data-state="completed"]{background:#e6eee5;color:#536b50}
 .progress-review-queue-badge[data-state="needs-date"]{background:#eee9e2;color:#74634e}
 .progress-review-queue-badge[data-state="upcoming"]{background:#eee7da;color:#74634e}
 .progress-review-queue-row .admin-row-button{padding:8px 11px;font-size:.68rem;white-space:nowrap}
-@media(max-width:650px){.progress-review-queue{padding:14px}.progress-review-queue-row{grid-template-columns:minmax(0,1fr) auto;gap:8px}.progress-review-queue-row .admin-row-button{grid-column:1/-1;justify-self:start}}
+@media(max-width:650px){.progress-review-queue{padding:14px}.progress-review-queue-row{grid-template-columns:minmax(0,1fr) auto;gap:8px}.progress-review-queue-actions{grid-column:1/-1;justify-self:start}.progress-review-queue-row .admin-row-button{justify-self:start}}
