@@ -152,6 +152,15 @@
           <div><p class="eyebrow">PRIVATE ADMIN AREA</p><h2>Your admin <em>workspace.</em></h2><p class="section-intro">Everything you need to look after Reframe Life, gathered into simple sections. Open only what you need.</p></div>
           <span class="admin-tag">ADMIN ONLY</span>
         </div>
+        <nav class="admin-workspace-nav" aria-label="Admin workspace shortcuts">
+          <p class="admin-workspace-nav-label">QUICK ACCESS</p>
+          <a href="#adminProgressReviews">Progress reviews <span>↗</span></a>
+          <a href="#adminCoachingOverview">Coaching overview <span>↗</span></a>
+          <a href="#adminProgrammeReadiness">Programme readiness <span>↗</span></a>
+          <a href="#adminWeeklyCheckins">Weekly check-ins <span>↗</span></a>
+          <a href="#adminQuestionnaires">Questionnaires <span>↗</span></a>
+          <a href="#adminDataRetention">Data retention <span>↗</span></a>
+        </nav>
         <form id="recipeAdminForm" class="admin-form">
           <input type="hidden" id="adminRecipeId">
           <div class="admin-form-grid">
@@ -172,27 +181,27 @@
           <div class="admin-actions"><button class="admin-save" type="submit" id="adminSave">Save recipe</button><button class="admin-cancel" type="button" id="adminCancel" hidden>Cancel edit</button><span id="adminMessage" role="status" aria-live="polite"></span></div>
         </form>
         <div class="admin-list-wrap"><h3>Your recipes</h3><div id="adminRecipeList" class="admin-recipe-list"></div></div>
-        <div class="admin-list-wrap checkin-admin-wrap">
+        <div class="admin-list-wrap checkin-admin-wrap" id="adminWeeklyCheckins">
           <div class="admin-submissions-heading"><div><h3>Weekly client check-ins</h3><p class="section-intro">Review clients' wellbeing ratings, wins and requests for support.</p></div><button type="button" class="admin-row-button" id="refreshCheckins">Refresh check-ins</button></div>
           <p id="checkinAdminMessage" class="admin-status" role="status" aria-live="polite">Check-ins will appear here.</p>
           <div id="checkinAdminList" class="onboarding-admin-list"></div>
         </div>
-        <div class="admin-list-wrap progress-review-admin-wrap"><div class="admin-submissions-heading"><div><h3>Four-week progress reviews</h3><p class="section-intro">Bring together a client’s recent check-ins and record progress and next steps.</p></div><button type="button" class="admin-row-button" id="refreshProgressReviews">Refresh reviews</button></div><p id="progressReviewAdminMessage" class="admin-status" role="status" aria-live="polite">Choose a client to begin.</p><div id="progressReviewAdmin"></div></div><div class="admin-list-wrap coaching-overview-wrap">
+        <div class="admin-list-wrap progress-review-admin-wrap" id="adminProgressReviews"><div class="admin-submissions-heading"><div><h3>Four-week progress reviews</h3><p class="section-intro">Bring together a client’s recent check-ins and record progress and next steps.</p></div><button type="button" class="admin-row-button" id="refreshProgressReviews">Refresh reviews</button></div><p id="progressReviewAdminMessage" class="admin-status" role="status" aria-live="polite">Choose a client to begin.</p><div id="progressReviewAdmin"></div></div><div class="admin-list-wrap coaching-overview-wrap" id="adminCoachingOverview">
           <div class="admin-submissions-heading"><div><h3>Coaching overview</h3><p class="section-intro">A simple timeline for active six-month clients, with programme access and links to their progress reviews.</p></div><button type="button" class="admin-row-button" id="refreshCoachingOverview">Refresh clients</button></div>
           <p id="coachingOverviewMessage" class="admin-status" role="status" aria-live="polite">Ongoing coaching clients will appear here.</p>
           <div id="coachingOverviewList" class="onboarding-admin-list"></div>
         </div>
-        <div class="admin-list-wrap programme-readiness-wrap">
+        <div class="admin-list-wrap programme-readiness-wrap" id="adminProgrammeReadiness">
           <div class="admin-submissions-heading"><div><h3>Programme readiness</h3><p class="section-intro">Mark a client's programme as ready once you've finished preparing and shared it with them.</p></div><button type="button" class="admin-row-button" id="refreshProgrammeReadiness">Refresh clients</button></div>
           <p id="programmeReadinessMessage" class="admin-status" role="status" aria-live="polite">Client questionnaires will appear here.</p>
           <div id="programmeReadinessList" class="onboarding-admin-list"></div>
         </div>
-        <div class="admin-list-wrap client-retention-admin-wrap">
+        <div class="admin-list-wrap client-retention-admin-wrap" id="adminDataRetention">
           <div class="admin-submissions-heading"><div><h3>Coaching end dates &amp; data retention</h3><p class="section-intro">When a client's coaching has actually ended, record the date here. Their coaching information is then due for secure deletion six months later. Payment and accounting records are kept separately.</p></div><button type="button" class="admin-row-button" id="refreshClientRetentionAdmin">Refresh clients</button></div>
           <p id="clientRetentionAdminMessage" class="admin-status" role="status" aria-live="polite">Client retention dates will appear here.</p>
           <div id="clientRetentionAdminList" class="onboarding-admin-list"></div>
         </div>
-        <div class="admin-list-wrap onboarding-admin-wrap">
+        <div class="admin-list-wrap onboarding-admin-wrap" id="adminQuestionnaires">
           <div class="admin-submissions-heading"><div><h3>Client questionnaires</h3><p class="section-intro">Private submissions from clients with paid or active programmes.</p></div><button type="button" class="admin-row-button" id="refreshOnboarding">Refresh submissions</button></div>
           <p id="onboardingAdminMessage" class="admin-status" role="status" aria-live="polite">Submissions will appear here.</p>
           <div id="onboardingAdminList" class="onboarding-admin-list"></div>
