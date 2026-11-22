@@ -508,3 +508,32 @@
 .admin-workspace-nav a span{color:var(--stone)}
 .admin-list-wrap[id]{scroll-margin-top:24px}
 @media(max-width:600px){.admin-workspace-nav{gap:7px;padding:13px}.admin-workspace-nav a{font-size:.68rem;padding:8px 9px}}
+
+
+/* Admin client communications tracker */
+.communication-form{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin:0 0 20px;padding:18px;background:#f8f5ef;border:1px solid rgba(156,141,116,.2);border-radius:12px}
+.communication-form>label{display:flex;flex-direction:column;gap:6px;color:var(--ink-soft);font-size:.75rem}
+.communication-form select,.communication-form textarea{width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:7px;background:var(--white);color:var(--ink);font:400 .82rem var(--sans)}
+.communication-details-field,.communication-form-actions{grid-column:1/-1}
+.communication-form textarea{resize:vertical}
+.communication-form-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.communication-form-actions p{margin:0;font-size:.72rem;color:var(--sage)}
+.communication-task-group{margin:14px 0 20px}
+.communication-task-group h4{margin:0 0 10px;font:500 1.2rem var(--serif)}
+.communication-task{display:grid;gap:8px;margin:0 0 10px;padding:15px 16px;border:1px solid rgba(156,141,116,.22);border-radius:11px;background:#fffdf9}
+.communication-task-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.communication-task-info{display:grid;gap:3px}
+.communication-task-info strong{font:500 1.08rem var(--serif);color:var(--ink)}
+.communication-task-type{font-size:.69rem;color:var(--sage);letter-spacing:.04em}
+.communication-task-status{padding:4px 8px;border-radius:999px;background:#f5e8d7;color:#89643f;font:600 .58rem var(--sans);letter-spacing:.08em}
+.communication-task-status{flex-shrink:0}
+.communication-task-details{margin:0;color:var(--ink-soft);font-size:.78rem;white-space:pre-wrap}
+.communication-task-date{color:var(--stone);font-size:.65rem}
+.communication-task-actions{display:flex;gap:8px;flex-wrap:wrap}
+.communication-sent-group{margin:18px 0 0;padding-top:14px;border-top:1px solid var(--line)}
+.communication-sent-group>summary{cursor:pointer;color:var(--ink-soft);font:500 1.05rem var(--serif)}
+.communication-sent-group[open]{display:grid;gap:9px}
+.communication-sent-group .communication-task{margin:0}
+.communication-sent-group .communication-task-status{background:#e6eee5;color:#536b50}
+.communication-empty{color:var(--stone);font-size:.78rem}
+@media(max-width:600px){.communication-form{grid-template-columns:1fr;padding:14px}.communication-details-field,.communication-form-actions{grid-column:1}.communication-task{padding:13px}.communication-task-top{align-items:flex-start}}
