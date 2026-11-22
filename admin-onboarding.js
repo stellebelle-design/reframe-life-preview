@@ -191,7 +191,7 @@
    if(error)throw error;checkins=data||[];
    const {data:accessRows,error:accessError}=await client.from("client_access").select("user_id,status").eq("status","active");
    if(accessError)throw accessError;
-   const {data:reviewRows,error:reviewsError}=await client.from("client_progress_reviews").select("user_id,period_start,period_end").order("period_start",{ascending:false});
+   const {data:reviewRows,error:reviewsError}=await client.from("client_progress_reviews").select("user_id,period_start,period_end,reflection_reviewed_at").order("period_start",{ascending:false});
    if(reviewsError)throw reviewsError;
    const {data:scheduleRows,error:scheduleError}=await client.from("client_programme_schedules").select("user_id,programme_start_date");
    if(scheduleError)throw scheduleError;
@@ -215,30 +215,52 @@
     const end=new Date(nextStart+"T12:00:00");end.setDate(end.getDate()+27);while(end.getDay()!==0)end.setDate(end.getDate()+1);
     const periodEnd=dateOnly(end);
     const periodCheckins=checkins.filter(x=>x.user_id===uid&&x.week_start>=nextStart&&x.week_start<=periodEnd);
-    if(today<periodEnd)return latest
-     ? {uid,name:clientNames.get(uid)||"Client",state:"completed",label:"COMPLETED",detail:"Latest review shared for "+displayDate(latest.period_start)+". Next review due "+displayDate(periodEnd)+"."}
-     : {uid,name:clientNames.get(uid)||"Client",state:"upcoming",label:"UPCOMING",detail:"First review period ends "+displayDate(periodEnd)+"."};
+    if(latest){
+     const reflection=(reflectionRows||[]).find(x=>x.user_id===uid&&x.period_start===latest.period_start);
+     if(!reflection)return {uid,name:clientNames.get(uid)||"Client",state:"awaiting-reflection",label:"AWAITING CLIENT REFLECTION",detail:"Review shared for "+displayDate(latest.period_start)+". Waiting for the client's response." ,reviewStart:latest.period_start};
+     if(!latest.reflection_reviewed_at)return {uid,name:clientNames.get(uid)||"Client",state:"reflection-received",label:"REFLECTION RECEIVED",detail:"Client submitted their reflection for "+displayDate(latest.period_start)+". Ready for you to read.",reviewStart:latest.period_start};
+     return {uid,name:clientNames.get(uid)||"Client",state:"completed",label:"COMPLETED",detail:"Reflection reviewed for "+displayDate(latest.period_start)+". Next review due "+displayDate(periodEnd)+"."};
+    }
+    if(today<periodEnd)return {uid,name:clientNames.get(uid)||"Client",state:"upcoming",label:"UPCOMING",detail:"First review period ends "+displayDate(periodEnd)+"."};
     if(periodCheckins.length)return {uid,name:clientNames.get(uid)||"Client",state:"awaiting",label:"AWAITING YOUR REVIEW",detail:periodCheckins.length+" weekly check-in"+(periodCheckins.length===1?"":"s")+" received for this period."};
     return {uid,name:clientNames.get(uid)||"Client",state:"due",label:"REVIEW DUE",detail:"The four-week period ended "+displayDate(periodEnd)+". No weekly check-ins were found."};
    });
-   const priority={awaiting:0,due:1,"needs-date":2,upcoming:3};
+   const priority={"reflection-received":0,"awaiting-reflection":1,awaiting:2,due:3,"needs-date":4,upcoming:5,completed:6};
    queueRows.sort((a,b)=>priority[a.state]-priority[b.state]||a.name.localeCompare(b.name));
    queueRows.forEach(item=>{
     const row=make("div","progress-review-queue-row");
     const info=make("div","progress-review-queue-info");
     info.append(make("strong",null,item.name),make("small",null,item.detail));
     const badge=make("span","progress-review-queue-badge",item.label);badge.dataset.state=item.state;
+    const actions=make("div","progress-review-queue-actions");
     const open=make("button","admin-row-button","Open review");open.type="button";
     open.addEventListener("click",()=>{
      select.value=item.uid;
-     const schedule=(scheduleRows||[]).find(x=>x.user_id===item.uid);
-     const latest=(reviewRows||[]).filter(x=>x.user_id===item.uid&&(!schedule?.programme_start_date||x.period_start>=schedule.programme_start_date)).sort((a,b)=>b.period_start.localeCompare(a.period_start))[0];
-     const next=latest?.period_end?new Date(latest.period_end+"T12:00:00"):null;
-     if(next){next.setDate(next.getDate()+1);start.value=dateOnly(next);}else start.value=schedule?.programme_start_date||"";
+     if(item.reviewStart)start.value=item.reviewStart;
+     else{
+      const schedule=(scheduleRows||[]).find(x=>x.user_id===item.uid);
+      const latest=(reviewRows||[]).filter(x=>x.user_id===item.uid&&(!schedule?.programme_start_date||x.period_start>=schedule.programme_start_date)).sort((a,b)=>b.period_start.localeCompare(a.period_start))[0];
+      const next=latest?.period_end?new Date(latest.period_end+"T12:00:00"):null;
+      if(next){next.setDate(next.getDate()+1);start.value=dateOnly(next);}else start.value=schedule?.programme_start_date||"";
+     }
      showClient().catch(error=>{console.error(error);status.textContent="Couldn’t load this client’s review.";});
      root.scrollIntoView({behavior:"smooth",block:"start"});
     });
-    row.append(info,badge,open);queue.append(row);
+    actions.append(open);
+    if(item.state==="reflection-received"){
+     const done=make("button","admin-row-button","Mark completed");done.type="button";
+     done.addEventListener("click",async()=>{
+      done.disabled=true;done.textContent="Saving…";
+      try{
+       const {error:updateError}=await client.from("client_progress_reviews").update({reflection_reviewed_at:new Date().toISOString()}).eq("user_id",item.uid).eq("period_start",item.reviewStart);
+       if(updateError)throw updateError;
+       status.textContent="Reflection marked as completed.";
+       await load();
+      }catch(error){console.error("Could not mark reflection completed:",error);status.textContent="We couldn't update the reflection status. Please try again.";done.disabled=false;done.textContent="Mark completed";}
+     });
+     actions.append(done);
+    }
+    row.append(info,badge,actions);queue.append(row);
    });
    root.append(queue);
 
