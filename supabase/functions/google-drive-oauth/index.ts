@@ -23,10 +23,15 @@ function json(data: unknown, status = 200) {
 }
 
 Deno.serve(async (req) => {
+  let diagnosticStage = "request-start";
+  try {
+  diagnosticStage = "request-method";
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  diagnosticStage = "configuration-check";
   if (!SUPABASE_URL || !SERVICE_ROLE_KEY || !GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
     return reply("Google Drive connection is not configured yet.", 503);
   }
+  diagnosticStage = "supabase-client-initialisation";
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
@@ -35,6 +40,7 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get("Authorization") || "";
     const jwt = authHeader.replace(/^Bearer\s+/i, "");
     if (!jwt) return reply("Sign-in required.", 401);
+    diagnosticStage = "verify-signed-in-user";
     const { data: userData, error: userError } = await admin.auth.getUser(jwt);
     if (userError || !userData.user) return reply("Sign-in required.", 401);
     let body: { action?: string; onboarding_id?: string } = {};
@@ -63,16 +69,22 @@ Deno.serve(async (req) => {
       return json({ copy: copy || null });
     }
 
+    diagnosticStage = "verify-admin-access";
     const { data: adminRow, error: adminError } = await admin.from("admin_users")
       .select("user_id").eq("user_id", userData.user.id).maybeSingle();
     if (adminError || !adminRow) return reply("Administrator access required.", 403);
 
     if (body.action === "calendar-connect-start") {
+      diagnosticStage = "create-oauth-state";
       const state = crypto.randomUUID() + crypto.randomUUID();
       const { error: stateError } = await admin.from("google_drive_oauth_states").insert({
         state, user_id: userData.user.id, expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
       });
-      if (stateError) return reply("Could not start the secure Google Calendar connection.", 500);
+      if (stateError) {
+        console.error("Calendar OAuth state insert failed:", { code: stateError.code, message: stateError.message, details: stateError.details, hint: stateError.hint });
+        return reply("Could not start the secure Google Calendar connection (database step failed).", 500);
+      }
+      diagnosticStage = "build-google-authorisation-url";
       const params = new URLSearchParams({
         client_id: GOOGLE_CLIENT_ID, redirect_uri: REDIRECT_URI, response_type: "code",
         scope: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/calendar.app.created",
@@ -486,4 +498,11 @@ Deno.serve(async (req) => {
     return Response.redirect(APP_RETURN_URL + (calendarApproved ? "?google_calendar=connected" : "?google_drive=connected"), 303);
   }
   return reply("Method not allowed.", 405);
+  } catch (error) {
+    const safeError = error instanceof Error
+      ? { name: error.name, message: error.message }
+      : { message: String(error) };
+    console.error("google-drive-oauth unexpected failure:", { stage: diagnosticStage, ...safeError });
+    return reply(`Google connection failed during ${diagnosticStage}. Please try again; the administrator can check the function logs for details.`, 500);
+  }
 });
