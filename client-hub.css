@@ -583,3 +583,19 @@
 .communication-central-note{margin:14px 0 0;padding:12px 14px;background:#f8f5ef;border:1px solid rgba(156,141,116,.2);border-radius:9px;color:var(--ink-soft);font-size:.76rem}
 .communication-central-note a{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
 @media(max-width:600px){.admin-task-progress{padding:12px}}
+
+/* Compact business snapshot beneath the central task centre */
+.admin-overview{margin:18px 0 22px;padding:21px;background:#f8f5ef;border:1px solid rgba(156,141,116,.2);border-radius:15px}
+.admin-overview-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:15px}
+.admin-overview-heading .eyebrow{margin:0 0 5px}
+.admin-overview-heading h3{margin:0;color:var(--ink);font-size:1.12rem}
+.admin-overview-heading p:not(.eyebrow){margin:5px 0 0;color:var(--ink-soft);font-size:.78rem}
+.admin-overview-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+.admin-overview-card{display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-height:112px;padding:15px;background:#fffdf9;border:1px solid rgba(156,141,116,.18);border-radius:11px;color:var(--ink);text-decoration:none;transition:transform .18s ease,border-color .18s ease}
+.admin-overview-card:hover{transform:translateY(-2px);border-color:rgba(135,151,126,.65)}
+.admin-overview-card strong{font-size:1.65rem;line-height:1.1;font-weight:600;font-variant-numeric:tabular-nums}
+.admin-overview-card span{font-size:.76rem;font-weight:600}
+.admin-overview-card small{color:var(--ink-soft);font-size:.68rem;line-height:1.4}
+.admin-overview-updated{margin:12px 0 0;color:var(--ink-soft);font-size:.68rem}
+@media(max-width:760px){.admin-overview-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-overview{padding:16px}}
+@media(max-width:480px){.admin-overview-heading{flex-direction:column}.admin-overview-grid{gap:8px}.admin-overview-card{min-height:100px;padding:12px}.admin-overview-card strong{font-size:1.45rem}}

@@ -160,6 +160,16 @@
           <details class="admin-completed-tasks"><summary>Completed tasks <span id="adminCompletedCount">(0)</span></summary><div id="adminCompletedTaskList"></div></details>
           <p id="adminTaskMessage" class="admin-status" role="status" aria-live="polite"></p>
         </section>
+        <section class="admin-overview" id="adminOverview" aria-labelledby="adminOverviewTitle">
+          <div class="admin-overview-heading">
+            <div><p class="eyebrow">AT A GLANCE</p><h3 id="adminOverviewTitle">Your Reframe Life overview</h3><p>See how things are moving across your clients and coaching.</p></div>
+            <button type="button" class="admin-row-button" id="refreshAdminOverview">Refresh overview</button>
+          </div>
+          <div class="admin-overview-grid" id="adminOverviewGrid" aria-live="polite">
+            <p class="admin-status">Loading your business overview…</p>
+          </div>
+          <p class="admin-overview-updated" id="adminOverviewUpdated" role="status" aria-live="polite"></p>
+        </section>
         <nav class="admin-workspace-nav" aria-label="Admin workspace shortcuts">
           <p class="admin-workspace-nav-label">QUICK ACCESS</p>
           <a href="#adminProgressReviews">Progress reviews <span>↗</span></a>
@@ -310,6 +320,7 @@
   <script src="client-communications.js?v=20261123-task-shortcuts-1"></script>
   <script src="admin-tasks.js?v=20261123-task-shortcuts-1"></script>
   <script src="admin-onboarding.js?v=20261123-task-shortcuts-1"></script>
+  <script src="admin-overview.js?v=20261123-overview-1"></script>
   <script src="google-drive-picker.js?v=20261119-master-direct"></script>
 </body>
 </html>
