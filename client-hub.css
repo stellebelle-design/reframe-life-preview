@@ -647,3 +647,35 @@
 .admin-calendar-content{padding:0 22px 22px}
 .admin-calendar-refresh-row{display:flex;justify-content:flex-end;margin:0 0 12px}
 @media(max-width:650px){.admin-calendar-summary{padding:16px 14px}.admin-calendar-summary strong{font-size:22px}.admin-calendar-content{padding:0 10px 14px}}
+
+
+/* Compact three-panel admin home */
+.admin-top-dashboard-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:stretch;margin:0 0 20px}
+.admin-top-dashboard-grid>.admin-task-centre,
+.admin-top-dashboard-grid>.admin-overview,
+.admin-top-dashboard-grid>.admin-client-directory{min-width:0;min-height:390px;max-height:440px;margin:0;padding:16px;overflow:hidden;display:flex;flex-direction:column}
+.admin-top-dashboard-grid .admin-task-centre-heading,
+.admin-top-dashboard-grid .admin-overview-heading,
+.admin-top-dashboard-grid .admin-client-directory-heading{gap:8px;margin-bottom:12px}
+.admin-top-dashboard-grid .admin-task-centre-heading h3,
+.admin-top-dashboard-grid .admin-client-directory-heading h3{font-size:1.45rem}
+.admin-top-dashboard-grid .admin-task-centre-heading p:not(.eyebrow),
+.admin-top-dashboard-grid .admin-client-directory-heading p:not(.eyebrow),
+.admin-top-dashboard-grid .admin-overview-heading p:not(.eyebrow){font-size:.7rem;line-height:1.4}
+.admin-top-dashboard-grid .admin-task-centre-heading .admin-save{padding:8px 10px;font-size:.72rem;white-space:nowrap}
+.admin-top-dashboard-grid .admin-task-summary{font-size:.78rem}
+.admin-top-dashboard-grid .admin-task-progress{margin:9px 0}
+.admin-top-dashboard-grid .admin-task-list{min-height:0;max-height:190px;overflow-y:auto;padding-right:3px}
+.admin-top-dashboard-grid .admin-completed-tasks{margin-top:auto;padding-top:9px}
+.admin-top-dashboard-grid .admin-overview-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.admin-top-dashboard-grid .admin-overview-card{min-height:82px;padding:10px;gap:3px}
+.admin-top-dashboard-grid .admin-overview-card strong{font-size:1.35rem}
+.admin-top-dashboard-grid .admin-overview-card span{font-size:.68rem}
+.admin-top-dashboard-grid .admin-overview-card small{font-size:.61rem}
+.admin-top-dashboard-grid .admin-overview-updated{margin-top:auto;padding-top:8px}
+.admin-top-dashboard-grid .admin-client-directory-tools{gap:6px;margin-bottom:8px}
+.admin-top-dashboard-grid .admin-client-search{flex:1 1 100%;min-width:0}
+.admin-top-dashboard-grid .admin-client-directory-grid{grid-template-columns:1fr;gap:7px;min-height:0;max-height:225px;overflow-y:auto;padding-right:3px}
+.admin-top-dashboard-grid .admin-client-count{font-size:.68rem}
+@media(max-width:1050px){.admin-top-dashboard-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-top-dashboard-grid>.admin-client-directory{grid-column:1/-1;max-height:390px}.admin-top-dashboard-grid .admin-client-directory-grid{grid-template-columns:repeat(2,minmax(0,1fr));max-height:210px}}
+@media(max-width:650px){.admin-top-dashboard-grid{grid-template-columns:1fr;gap:11px}.admin-top-dashboard-grid>.admin-task-centre,.admin-top-dashboard-grid>.admin-overview,.admin-top-dashboard-grid>.admin-client-directory{min-height:0;max-height:420px}.admin-top-dashboard-grid>.admin-client-directory{grid-column:auto}.admin-top-dashboard-grid .admin-client-directory-grid{grid-template-columns:1fr}}
