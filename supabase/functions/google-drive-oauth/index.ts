@@ -488,7 +488,7 @@ Deno.serve(async (req) => {
       console.error("Could not save Google connection:", saveError);
       return reply("Google connected, but Reframe Life could not save the connection.", 500);
     }
-    const calendarApproved = (tokens.scope || "").split(/\\s+/).includes("https://www.googleapis.com/auth/calendar.events");
+    const calendarApproved = (tokens.scope || "").split(/\s+/).includes("https://www.googleapis.com/auth/calendar.events");
     return Response.redirect(APP_RETURN_URL + (calendarApproved ? "?google_calendar=connected" : "?google_drive=connected"), 303);
   }
   return reply("Method not allowed.", 405);
