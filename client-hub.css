@@ -501,13 +501,14 @@
 @media(max-width:650px){.progress-review-queue{padding:14px}.progress-review-queue-row{grid-template-columns:minmax(0,1fr) auto;gap:8px}.progress-review-queue-actions{grid-column:1/-1;justify-self:start}.progress-review-queue-row .admin-row-button{justify-self:start}}
 
 /* Admin workspace quick navigation */
-.admin-workspace-nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 28px;padding:15px 17px;background:var(--white);border:1px solid var(--line);border-radius:12px}
-.admin-workspace-nav-label{width:100%;margin:0 0 3px;color:var(--stone);font-size:.61rem;letter-spacing:.17em}
-.admin-workspace-nav a{display:inline-flex;align-items:center;gap:7px;padding:8px 11px;background:#f7f3ee;border:1px solid #ebe3da;border-radius:8px;color:var(--ink-soft);font-size:.72rem;transition:background .2s,border-color .2s}
-.admin-workspace-nav a:hover{background:var(--cream-deep);border-color:var(--stone-light);color:var(--ink)}
-.admin-workspace-nav a span{color:var(--stone)}
+.admin-workspace-nav{position:sticky;top:10px;z-index:20;display:flex;align-items:center;gap:15px;margin:0 0 28px;padding:11px 14px;background:rgba(255,253,249,.97);border:1px solid var(--line);border-radius:12px;box-shadow:0 5px 18px rgba(70,58,43,.07);backdrop-filter:blur(12px)}
+.admin-workspace-nav-label{flex:0 0 auto;margin:0;color:var(--stone);font-size:.6rem;font-weight:700;letter-spacing:.16em}
+.admin-workspace-nav-links{display:flex;align-items:center;gap:6px;min-width:0;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;padding:1px 1px 4px}
+.admin-workspace-nav a{display:inline-flex;align-items:center;flex:0 0 auto;padding:8px 10px;background:#f7f3ee;border:1px solid #ebe3da;border-radius:8px;color:var(--ink-soft);font-size:.7rem;white-space:nowrap;transition:background .2s,border-color .2s,color .2s}
+.admin-workspace-nav a:hover,.admin-workspace-nav a:focus-visible{background:var(--cream-deep);border-color:var(--stone-light);color:var(--ink)}
+.admin-workspace-nav a:focus-visible{outline:2px solid var(--stone);outline-offset:2px}
 .admin-list-wrap[id]{scroll-margin-top:24px}
-@media(max-width:600px){.admin-workspace-nav{gap:7px;padding:13px}.admin-workspace-nav a{font-size:.68rem;padding:8px 9px}}
+@media(max-width:760px){.admin-workspace-nav{top:6px;gap:10px;padding:9px 10px}.admin-workspace-nav-label{font-size:.55rem}.admin-workspace-nav-links{gap:5px}.admin-workspace-nav a{font-size:.66rem;padding:7px 9px}}
 
 
 /* Admin client communications tracker */
