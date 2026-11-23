@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Jost:wght@300;400;500;600&family=Petit+Formal+Script&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="client-hub.css?v=20261123-sidebar-1">
+  <link rel="stylesheet" href="client-hub.css?v=20261123-client-directory-1">
 <style>
 .sidebar-view-switch{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:0 0 18px;padding:4px;background:#f3eee9;border-radius:12px}
 .sidebar-view-switch button{border:0;background:transparent;border-radius:9px;padding:9px 8px;font-family:var(--serif);font-size:16px;font-weight:500;letter-spacing:.015em;line-height:1.2;color:#625b55;cursor:pointer;transition:background .2s,color .2s,box-shadow .2s}
@@ -170,13 +170,19 @@
           </div>
           <p class="admin-overview-updated" id="adminOverviewUpdated" role="status" aria-live="polite"></p>
         </section>
+        <section class="admin-client-directory" id="adminClientDirectory" aria-labelledby="adminClientDirectoryTitle">
+          <div class="admin-client-directory-heading"><div><p class="eyebrow">YOUR PEOPLE</p><h3 id="adminClientDirectoryTitle">Client directory</h3><p>Find a client and see their coaching journey at a glance.</p></div><button type="button" class="admin-row-button" id="refreshClientDirectory">Refresh directory</button></div>
+          <div class="admin-client-directory-tools"><label class="admin-client-search"><span aria-hidden="true">⌕</span><input id="clientDirectorySearch" type="search" placeholder="Search clients by name…" aria-label="Search clients by name"></label><label class="admin-client-filter-label" for="clientDirectoryStatus">Show</label><select id="clientDirectoryStatus" class="admin-client-filter"><option value="all">All clients</option><option value="active">Active</option><option value="inactive">Inactive</option></select><span id="clientDirectoryCount" class="admin-client-count"></span></div>
+          <p id="clientDirectoryMessage" class="admin-status" role="status" aria-live="polite">Your clients will appear here.</p><div id="clientDirectoryGrid" class="admin-client-directory-grid"></div>
+          <section id="clientProfilePanel" class="admin-client-profile" aria-live="polite" hidden><div class="admin-client-profile-heading"><div><p class="eyebrow">CLIENT PROFILE</p><h4 id="clientProfileName">Client name</h4><p id="clientProfileMeta"></p></div><button type="button" class="admin-menu-close" id="closeClientProfile" aria-label="Close client profile">×</button></div><div id="clientProfileSummary" class="admin-client-profile-grid"></div><div class="admin-client-profile-links"><a href="#adminQuestionnaires">Questionnaires</a><a href="#adminProgrammeReadiness">Programme readiness</a><a href="#adminWeeklyCheckins">Weekly check-ins</a><a href="#adminProgressReviews">Progress reviews</a><a href="#adminCommunications">Communications</a><a href="#adminDataRetention">Coaching &amp; retention</a></div><p class="admin-client-profile-note">These shortcuts take you to the relevant workspace sections. Client information is only shown in this private admin area.</p></section>
+        </section>
         <button type="button" class="admin-menu-toggle" id="adminMenuToggle" aria-label="Open workspace menu" aria-controls="adminSideMenu" aria-expanded="false"><span></span><span></span><span></span></button>
         <div class="admin-menu-backdrop" id="adminMenuBackdrop" hidden></div>
         <aside class="admin-side-menu" id="adminSideMenu" aria-label="Workspace navigation" aria-hidden="true" inert>
           <div class="admin-side-menu-heading"><div><p class="eyebrow">REFRAME LIFE</p><h3>Workspace menu</h3></div><button type="button" id="adminMenuClose" class="admin-menu-close" aria-label="Close workspace menu">×</button></div>
           <p class="admin-side-menu-label">YOUR SECTIONS</p>
           <nav class="admin-side-menu-links" aria-label="Admin workspace sections">
-            <a href="#adminTaskCentre">My tasks</a><a href="#adminOverview">Overview</a><a href="#adminCoachingOverview">Coaching</a><a href="#adminProgrammeReadiness">Programmes</a><a href="#adminWeeklyCheckins">Check-ins</a><a href="#adminProgressReviews">Reviews</a><a href="#adminCommunications">Communications</a><a href="#adminQuestionnaires">Questionnaires</a><a href="#recipeAdminForm">Recipe Bank</a><a href="#adminDataRetention">Data retention</a>
+            <a href="#adminTaskCentre">My tasks</a><a href="#adminOverview">Overview</a><a href="#adminClientDirectory">Clients</a><a href="#adminCoachingOverview">Coaching</a><a href="#adminProgrammeReadiness">Programmes</a><a href="#adminWeeklyCheckins">Check-ins</a><a href="#adminProgressReviews">Reviews</a><a href="#adminCommunications">Communications</a><a href="#adminQuestionnaires">Questionnaires</a><a href="#recipeAdminForm">Recipe Bank</a><a href="#adminDataRetention">Data retention</a>
           </nav><p class="admin-side-menu-foot">A little shortcut to everything you need.</p>
         </aside>
         <form id="recipeAdminForm" class="admin-form">
@@ -321,6 +327,7 @@
   <script src="admin-onboarding.js?v=20261123-task-shortcuts-1"></script>
   <script src="admin-overview.js?v=20261123-overview-1"></script>
   <script src="admin-sidebar.js?v=20261123-sidebar-2"></script>
+  <script src="admin-client-directory.js?v=20261123-client-directory-1"></script>
   <script src="google-drive-picker.js?v=20261119-master-direct"></script>
 </body>
 </html>

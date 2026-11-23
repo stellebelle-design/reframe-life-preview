@@ -612,3 +612,24 @@
 .admin-side-menu-foot{margin:28px 0 0;padding-top:17px;border-top:1px solid var(--line);color:var(--stone);font:italic .95rem var(--serif)}
 @media(max-width:600px){.admin-menu-toggle{top:100px;left:12px;width:44px;height:44px}.admin-side-menu{padding:25px 20px}}
 @media(prefers-reduced-motion:reduce){.admin-side-menu{transition:none}}
+
+.admin-client-directory{margin:20px 0 28px;padding:22px;background:#f8f5ef;border:1px solid rgba(156,141,116,.22);border-radius:15px}
+.admin-client-directory-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:17px}
+.admin-client-directory-heading .eyebrow{margin:0 0 5px}.admin-client-directory-heading h3{margin:0;font:500 1.75rem/1.1 var(--serif);color:var(--ink)}.admin-client-directory-heading p:not(.eyebrow){margin:5px 0 0;color:var(--ink-soft);font-size:.78rem}
+.admin-client-directory-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 14px}
+.admin-client-search{display:flex;align-items:center;gap:8px;flex:1 1 240px;min-width:180px;padding:8px 12px;background:#fffdf9;border:1px solid var(--line);border-radius:9px;color:var(--stone)}
+.admin-client-search input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:var(--ink);font:400 .8rem var(--sans)}
+.admin-client-filter-label{color:var(--ink-soft);font-size:.72rem}.admin-client-filter{padding:9px 28px 9px 10px;border:1px solid var(--line);border-radius:8px;background:#fffdf9;color:var(--ink-soft);font:400 .76rem var(--sans)}
+.admin-client-count{margin-left:auto;color:var(--stone);font-size:.7rem}
+.admin-client-directory-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.admin-client-card{display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-width:0;padding:15px;background:#fffdf9;border:1px solid rgba(156,141,116,.2);border-radius:11px;text-align:left;color:var(--ink);cursor:pointer;transition:border-color .18s,transform .18s}
+.admin-client-card:hover,.admin-client-card:focus-visible{border-color:rgba(119,131,107,.7);transform:translateY(-1px);outline:none}.admin-client-card strong{font:500 1.15rem/1.2 var(--serif);overflow-wrap:anywhere}.admin-client-card small{color:var(--ink-soft);font-size:.68rem}
+.admin-client-status{display:inline-flex;align-items:center;margin-top:4px;padding:4px 8px;border-radius:99px;background:#edf0e9;color:#65735c;font-size:.59rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase}.admin-client-status[data-status="inactive"]{background:#f1ece5;color:#827565}
+.admin-client-profile{margin-top:18px;padding:20px;background:#fffdf9;border:1px solid rgba(156,141,116,.25);border-radius:12px}
+.admin-client-profile-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding-bottom:15px;border-bottom:1px solid var(--line)}.admin-client-profile-heading .eyebrow{margin:0 0 4px}.admin-client-profile-heading h4{margin:0;font:500 1.8rem/1.1 var(--serif)}.admin-client-profile-heading p:not(.eyebrow){margin:5px 0 0;color:var(--stone);font-size:.7rem}
+.admin-client-profile-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:15px 0}
+.admin-client-profile-stat{padding:12px;background:#f8f5ef;border:1px solid rgba(156,141,116,.15);border-radius:9px}.admin-client-profile-stat span{display:block;color:var(--stone);font-size:.62rem;letter-spacing:.06em;text-transform:uppercase}.admin-client-profile-stat strong{display:block;margin-top:4px;color:var(--ink);font-size:.82rem;font-weight:600;overflow-wrap:anywhere}
+.admin-client-profile-links{display:flex;gap:7px;flex-wrap:wrap}.admin-client-profile-links a{padding:8px 10px;background:#f4f0e8;border:1px solid #ebe3da;border-radius:7px;color:var(--ink-soft);font-size:.68rem}.admin-client-profile-links a:hover{background:var(--cream-deep);color:var(--ink)}
+.admin-client-profile-note{margin:13px 0 0;color:var(--stone);font-size:.67rem}
+@media(max-width:760px){.admin-client-directory-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-client-profile-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){.admin-client-directory{padding:16px}.admin-client-directory-heading{flex-direction:column}.admin-client-directory-grid{grid-template-columns:1fr}.admin-client-profile{padding:15px}.admin-client-profile-grid{grid-template-columns:1fr 1fr}}

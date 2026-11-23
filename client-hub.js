@@ -429,6 +429,7 @@
     if (adminRecord && window.loadAdminCommunications) await window.loadAdminCommunications();
     if (adminRecord && window.loadAdminTasks) await window.loadAdminTasks();
     if (adminRecord && window.loadAdminOverview) await window.loadAdminOverview();
+    if (adminRecord && window.loadAdminClientDirectory) await window.loadAdminClientDirectory();
     return true;
   }
 
