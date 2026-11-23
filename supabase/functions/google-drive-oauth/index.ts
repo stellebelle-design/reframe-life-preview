@@ -40,6 +40,33 @@ Deno.serve(async (req) => {
     let body: { action?: string; onboarding_id?: string } = {};
     try { body = await req.json(); } catch { /* OAuth start may send an empty body. */ }
 
+    if (body.action === "get-client-copy") {
+      const onboardingId = typeof body.onboarding_id === "string" ? body.onboarding_id : "";
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(onboardingId)) {
+        return reply("A valid questionnaire reference is required.", 400);
+      }
+      const { data: submission, error: submissionError } = await admin.from("client_onboarding")
+        .select("id,purchase_id,user_id").eq("id", onboardingId).maybeSingle();
+      if (submissionError || !submission) return reply("The programme could not be found.", 404);
+      const { data: adminRow } = await admin.from("admin_users")
+        .select("user_id").eq("user_id", userData.user.id).maybeSingle();
+      const isOwner = submission.user_id === userData.user.id;
+      if (!isOwner && !adminRow) return reply("You do not have access to this programme.", 403);
+      if (isOwner) {
+        const { data: readiness, error: readinessError } = await admin.from("client_programme_readiness")
+          .select("is_ready").eq("purchase_id", submission.purchase_id).eq("user_id", userData.user.id).maybeSingle();
+        if (readinessError || !readiness?.is_ready) return reply("Your programme is not available yet.", 403);
+      }
+      const { data: copy, error: copyError } = await admin.from("client_programme_copies")
+        .select("drive_file_url,spreadsheet_name").eq("onboarding_id", onboardingId).maybeSingle();
+      if (copyError) return reply("Could not load the programme link.", 500);
+      return json({ copy: copy || null });
+    }
+
+    const { data: adminRow, error: adminError } = await admin.from("admin_users")
+      .select("user_id").eq("user_id", userData.user.id).maybeSingle();
+    if (adminError || !adminRow) return reply("Administrator access required.", 403);
+
     if (body.action === "calendar-connect-start") {
       const state = crypto.randomUUID() + crypto.randomUUID();
       const { error: stateError } = await admin.from("google_drive_oauth_states").insert({
@@ -176,32 +203,6 @@ Deno.serve(async (req) => {
       return json({ synced, calendarName: "Reframe Life Coaching" });
     }
 
-    if (body.action === "get-client-copy") {
-      const onboardingId = typeof body.onboarding_id === "string" ? body.onboarding_id : "";
-      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(onboardingId)) {
-        return reply("A valid questionnaire reference is required.", 400);
-      }
-      const { data: submission, error: submissionError } = await admin.from("client_onboarding")
-        .select("id,purchase_id,user_id").eq("id", onboardingId).maybeSingle();
-      if (submissionError || !submission) return reply("The programme could not be found.", 404);
-      const { data: adminRow } = await admin.from("admin_users")
-        .select("user_id").eq("user_id", userData.user.id).maybeSingle();
-      const isOwner = submission.user_id === userData.user.id;
-      if (!isOwner && !adminRow) return reply("You do not have access to this programme.", 403);
-      if (isOwner) {
-        const { data: readiness, error: readinessError } = await admin.from("client_programme_readiness")
-          .select("is_ready").eq("purchase_id", submission.purchase_id).eq("user_id", userData.user.id).maybeSingle();
-        if (readinessError || !readiness?.is_ready) return reply("Your programme is not available yet.", 403);
-      }
-      const { data: copy, error: copyError } = await admin.from("client_programme_copies")
-        .select("drive_file_url,spreadsheet_name").eq("onboarding_id", onboardingId).maybeSingle();
-      if (copyError) return reply("Could not load the programme link.", 500);
-      return json({ copy: copy || null });
-    }
-
-    const { data: adminRow, error: adminError } = await admin.from("admin_users")
-      .select("user_id").eq("user_id", userData.user.id).maybeSingle();
-    if (adminError || !adminRow) return reply("Administrator access required.", 403);
 
     if (body.action === "get-client-copy") {
       const onboardingId = typeof body.onboarding_id === "string" ? body.onboarding_id : "";
