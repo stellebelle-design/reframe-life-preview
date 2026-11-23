@@ -922,6 +922,9 @@ window.reframeGetClientNames = async function(userIds){
         button.textContent=existing?"Update end date":"Record end date";
         const message=document.createElement("p");message.className="admin-status";message.setAttribute("role","status");
         const note=document.createElement("small");note.textContent="The six-month retention period starts from this date. Do not enter a date for a pause or an ongoing programme.";
+       const due=document.createElement("p");due.className="admin-status";
+       const updateDue=()=>{due.textContent=input.value?"Secure deletion due: "+showRetentionDate(addSixMonths(input.value)):"The secure-deletion due date will appear here once you choose an end date.";};
+       updateDue();input.addEventListener("change",updateDue);
         button.addEventListener("click",async()=>{
           if(!input.value){message.textContent="Please choose the date coaching actually ended.";return;}
           if(!window.confirm("Record "+input.value+" as the date this client's coaching ended? This starts their six-month retention period."))return;
