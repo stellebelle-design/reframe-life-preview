@@ -104,12 +104,14 @@ Deno.serve(async (req) => {
     }
 
     if (body.action === "sync-coaching-calendar") {
+      diagnosticStage = "calendar-sync-load-google-connection";
       const { data: connection, error: connectionError } = await admin.from("google_drive_connections")
         .select("refresh_token,access_token,access_token_expires_at,scope").eq("id", 1).maybeSingle();
       if (connectionError || !connection?.refresh_token) return reply("Connect Google first.", 409);
       if (!(connection.scope || "").split(/\s+/).includes("https://www.googleapis.com/auth/calendar.app.created")) {
         return reply("Please connect Google Calendar and approve calendar access first.", 409);
       }
+      diagnosticStage = "calendar-sync-refresh-google-token";
       let accessToken = connection.access_token;
       const expiresAt = connection.access_token_expires_at ? new Date(connection.access_token_expires_at).getTime() : 0;
       if (!accessToken || expiresAt < Date.now() + 60000) {
@@ -126,12 +128,14 @@ Deno.serve(async (req) => {
           scope: tokens.scope || connection.scope,
         }).eq("id", 1);
       }
+      diagnosticStage = "calendar-sync-load-calendar-settings";
       const googleHeaders = { Authorization: "Bearer " + accessToken, "Content-Type": "application/json" };
       const { data: calendarState, error: calendarStateError } = await admin.from("google_calendar_sync_state")
         .select("calendar_id,calendar_name").eq("id", 1).maybeSingle();
       if (calendarStateError) return reply("Could not read the Reframe Life calendar settings.", 500);
       let calendarId = calendarState?.calendar_id || "";
       if (!calendarId) {
+        diagnosticStage = "calendar-sync-create-calendar";
         const createResponse = await fetch("https://www.googleapis.com/calendar/v3/calendars", {
           method: "POST", headers: googleHeaders,
           body: JSON.stringify({ summary: "Reframe Life Coaching", description: "A separate calendar for coaching dates managed by Reframe Life." }),
@@ -148,6 +152,7 @@ Deno.serve(async (req) => {
         if (saveCalendarError) return reply("The Google calendar was created, but Reframe Life could not save its connection.", 500);
       }
 
+      diagnosticStage = "calendar-sync-load-client-dates";
       const { data: purchases, error: purchasesError } = await admin.from("client_purchases")
         .select("user_id,product_key,payment_status").in("product_key", ["coaching_4_week","coaching_8_week","coaching_12_week","coaching_6_month"])
         .eq("payment_status", "active");
@@ -186,12 +191,14 @@ Deno.serve(async (req) => {
         while (milestone <= endDate && count < 8) { add("review", "Four-week review", milestone, ":" + count); milestone = isoPlus(milestone, 28); count++; }
         add("end", "Estimated programme end", endDate);
       }
+      diagnosticStage = "calendar-sync-load-event-map";
       const { data: existingMaps, error: mapError } = await admin.from("google_calendar_event_map").select("event_key,google_event_id");
       if (mapError) return reply("Could not load the event sync records.", 500);
       const existingMap = new Map((existingMaps || []).map((row: { event_key: string; google_event_id: string }) => [row.event_key, row.google_event_id]));
       const wantedKeys = new Set(desired.map(item => item.key));
       let synced = 0;
       for (const item of desired) {
+        diagnosticStage = "calendar-sync-upsert-event";
         const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(item.key));
         const eventId = Array.from(new Uint8Array(digest)).map(byte => byte.toString(16).padStart(2, "0")).join("");
         const eventBody = {
@@ -212,12 +219,19 @@ Deno.serve(async (req) => {
         await admin.from("google_calendar_event_map").upsert({ event_key: item.key, google_event_id: result.id || eventId, updated_at: new Date().toISOString() }, { onConflict: "event_key" });
         synced++;
       }
+      diagnosticStage = "calendar-sync-remove-obsolete-events";
       for (const row of existingMaps || []) {
         if (wantedKeys.has(row.event_key)) continue;
         await fetch("https://www.googleapis.com/calendar/v3/calendars/" + encodeURIComponent(calendarId) + "/events/" + row.google_event_id, { method: "DELETE", headers: googleHeaders });
         await admin.from("google_calendar_event_map").delete().eq("event_key", row.event_key);
       }
-      await admin.from("google_calendar_sync_state").update({ last_synced_at: new Date().toISOString() }).eq("id", 1);
+      diagnosticStage = "calendar-sync-save-completion";
+      const { error: completionError } = await admin.from("google_calendar_sync_state").update({ last_synced_at: new Date().toISOString() }).eq("id", 1);
+      if (completionError) {
+        console.error("Calendar sync completion save failed:", { code: completionError.code, message: completionError.message, details: completionError.details, hint: completionError.hint });
+        return reply("Calendar events were synced, but Reframe Life could not save the sync time.", 500);
+      }
+      console.log("Calendar sync completed:", { synced });
       return json({ synced, calendarName: "Reframe Life Coaching" });
     }
 
