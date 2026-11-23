@@ -67,6 +67,24 @@ Deno.serve(async (req) => {
     if (!productKey || !Object.hasOwn(products, productKey)) {
       return Response.json({ error: "Please choose a valid Reframe Life product." }, { status: 400, headers: corsHeaders });
     }
+    if (body?.termsAccepted !== true || body?.termsVersion !== "2026-11-23") {
+      return Response.json({ error: "Please read and accept the current Terms & Conditions before continuing." }, { status: 400, headers: corsHeaders });
+    }
+    const earlyServiceStartRequested = body?.earlyServiceStartRequested === true;
+    const earlyDigitalSupplyConsent = body?.earlyDigitalSupplyConsent === true;
+    const digitalCancellationRightAcknowledged = body?.digitalCancellationRightAcknowledged === true;
+    if (earlyDigitalSupplyConsent !== digitalCancellationRightAcknowledged) {
+      return Response.json({ error: "The digital-content consent and acknowledgement must both be confirmed." }, { status: 400, headers: corsHeaders });
+    }
+    const consentRecordedAt = new Date().toISOString();
+    const consentMetadata = {
+      terms_accepted: "true",
+      terms_version: "2026-11-23",
+      terms_accepted_at: consentRecordedAt,
+      early_service_start: String(earlyServiceStartRequested),
+      early_digital_supply: String(earlyDigitalSupplyConsent),
+      digital_cancel_ack: String(digitalCancellationRightAcknowledged),
+    };
 
     const product = products[productKey];
     const priceId = Deno.env.get(product.priceEnv)?.trim();
@@ -92,6 +110,7 @@ Deno.serve(async (req) => {
       metadata: {
         supabase_user_id: user.id,
         product_key: productKey,
+        ...consentMetadata,
       },
       ...(product.mode === "subscription"
         ? {
@@ -100,6 +119,7 @@ Deno.serve(async (req) => {
               metadata: {
                 supabase_user_id: user.id,
                 product_key: productKey,
+                ...consentMetadata,
               },
             },
           }
@@ -108,6 +128,7 @@ Deno.serve(async (req) => {
               metadata: {
                 supabase_user_id: user.id,
                 product_key: productKey,
+                ...consentMetadata,
               },
             },
           }),
