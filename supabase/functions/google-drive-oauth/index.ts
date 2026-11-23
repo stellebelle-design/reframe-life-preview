@@ -137,7 +137,10 @@ Deno.serve(async (req) => {
           body: JSON.stringify({ summary: "Reframe Life Coaching", description: "A separate calendar for coaching dates managed by Reframe Life." }),
         });
         const created = await createResponse.json();
-        if (!createResponse.ok || !created.id) return reply("Google could not create the separate Reframe Life Coaching calendar: " + (created.error?.message || createResponse.status), 502);
+        if (!createResponse.ok || !created.id) {
+          console.error("Google Calendar API failure:", { phase: "create-calendar", httpStatus: createResponse.status, googleStatus: created.error?.status, googleCode: created.error?.code, googleMessage: created.error?.message, googleReasons: created.error?.errors?.map((item: { reason?: string }) => item.reason) });
+          return reply("Google could not create the separate Reframe Life Coaching calendar (Google HTTP " + createResponse.status + "). Check the function logs for the safe diagnostic details.", 502);
+        }
         calendarId = created.id;
         const { error: saveCalendarError } = await admin.from("google_calendar_sync_state").upsert({
           id: 1, calendar_id: calendarId, calendar_name: "Reframe Life Coaching", connected_at: new Date().toISOString(),
@@ -202,7 +205,10 @@ Deno.serve(async (req) => {
           method: oldId ? "PATCH" : "POST", headers: googleHeaders, body: JSON.stringify(eventBody),
         });
         const result = await response.json();
-        if (!response.ok) return reply("Google Calendar could not sync " + item.summary + ": " + (result.error?.message || response.status), 502);
+        if (!response.ok) {
+          console.error("Google Calendar API failure:", { phase: "upsert-event", httpStatus: response.status, googleStatus: result.error?.status, googleCode: result.error?.code, googleMessage: result.error?.message, googleReasons: result.error?.errors?.map((entry: { reason?: string }) => entry.reason) });
+          return reply("Google Calendar could not sync a coaching event (Google HTTP " + response.status + "). Check the function logs for the safe diagnostic details.", 502);
+        }
         await admin.from("google_calendar_event_map").upsert({ event_key: item.key, google_event_id: result.id || eventId, updated_at: new Date().toISOString() }, { onConflict: "event_key" });
         synced++;
       }
