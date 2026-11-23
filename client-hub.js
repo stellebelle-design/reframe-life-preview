@@ -430,6 +430,7 @@
     if (adminRecord && window.loadAdminTasks) await window.loadAdminTasks();
     if (adminRecord && window.loadAdminOverview) await window.loadAdminOverview();
     if (adminRecord && window.loadAdminClientDirectory) await window.loadAdminClientDirectory();
+    if (adminRecord && window.loadAdminCoachingCalendar) await window.loadAdminCoachingCalendar();
     return true;
   }
 
