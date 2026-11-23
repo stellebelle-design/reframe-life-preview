@@ -31,6 +31,21 @@
   const due=el("span",!done&&task.due_date&&task.due_date<today()?"admin-task-due-overdue":"",task.due_date?(task.due_date<today()&&!done?"Overdue · ":"Due · ")+dateLabel(task.due_date):"No due date");meta.append(due);main.append(meta);
   if(task.details)main.append(el("p","admin-task-notes",task.details));
   const actions=el("div","admin-task-actions");
+  const addOpenAction=(label,handlerName)=>{
+   const button=el("button",null,label);button.type="button";
+   button.addEventListener("click",async()=>{
+    button.disabled=true;button.textContent="Opening…";
+    try{
+     if(typeof window[handlerName]!=="function")throw new Error("This workspace section is not available.");
+     await window[handlerName](task.source_key,task.user_id,task);
+    }catch(error){console.error("Could not open task destination:",error);status.textContent="Couldn't open that task destination. You can still use the matching section below.";}
+    finally{button.disabled=false;button.textContent=label;}
+   });
+   actions.append(button);
+  };
+  if(task.category==="Programme preparation"&&task.source_key?.startsWith("programme-preparation:"))addOpenAction("Open questionnaire","openAdminProgrammePreparationForTask");
+  if(task.category==="Client follow-up"&&task.source_key?.startsWith("weekly-checkin-feedback:"))addOpenAction("Open check-in","openAdminCheckinForTask");
+  if(task.category==="Communication"&&task.source_key?.startsWith("communication:"))addOpenAction("Open communication","openAdminCommunicationForTask");
   if(task.category==="Progress review"){
    const openReview=el("button",null,"Open review");openReview.type="button";
    openReview.addEventListener("click",async()=>{

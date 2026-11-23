@@ -116,6 +116,19 @@
       formMessage.textContent="We couldn't add that task. Please check the database setup and try again.";
     }finally{saveButton.disabled=false;saveButton.textContent="Add to to-do list";}
   });
+  window.openAdminCommunicationForTask=async(sourceKey,userId,task)=>{
+    const root=document.querySelector("#adminCommunications");
+    if(!root)throw new Error("Communications section is unavailable.");
+    const group=root.closest("details.admin-tool-group");if(group)group.open=true;
+    await loadClients();
+    if(userId)clientSelect.value=userId;
+    const title=String(task?.title||"");
+    const type=[...typeSelect.options].map(option=>option.value).find(value=>title.toLowerCase().includes(value.toLowerCase()));
+    if(type)typeSelect.value=type;
+    detailsInput.value=task?.details||"";
+    root.scrollIntoView({behavior:"smooth",block:"start"});
+    detailsInput.focus({preventScroll:true});
+  };
   refresh?.addEventListener("click",load);
   window.loadAdminCommunications=load;
 })();

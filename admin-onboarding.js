@@ -35,7 +35,7 @@
       const clientNames=await window.reframeGetClientNames(data.map(item=>item.user_id));
       status.textContent=data.length+" questionnaire submission"+(data.length===1?"":"s")+" found.";
       data.forEach(item=>{
-        const details=document.createElement("details");details.className="onboarding-submission";
+        const details=document.createElement("details");details.className="onboarding-submission";details.dataset.onboardingId=item.id;details.dataset.userId=item.user_id;
         const summary=document.createElement("summary");
         const info=document.createElement("div");
         const title=document.createElement("strong");title.textContent=names[item.product_key]||"Client questionnaire";
@@ -98,6 +98,14 @@
       status.textContent="We couldn't load the submissions. Please check administrator access and try again.";
     }finally{if(refresh)refresh.disabled=false;}
   }
+  window.openAdminProgrammePreparationForTask=async(sourceKey,userId)=>{
+    const group=list.closest("details.admin-tool-group");if(group)group.open=true;
+    await load();
+    const id=String(sourceKey||"").slice("programme-preparation:".length);
+    const card=[...list.querySelectorAll("[data-onboarding-id]")].find(node=>node.dataset.onboardingId===id);
+    if(!card)throw new Error("The questionnaire could not be found.");
+    card.open=true;card.scrollIntoView({behavior:"smooth",block:"center"});
+  };
   refresh?.addEventListener("click",load);
   window.loadAdminOnboarding=load;
 })();
@@ -143,7 +151,7 @@
       status.textContent=data.length+" check-in"+(data.length===1?"":"s")+" found.";
       if(unanswered.length&&window.loadAdminTasks)await window.loadAdminTasks();
       data.forEach(item=>{
-        const details=document.createElement("details");details.className="onboarding-submission";
+        const details=document.createElement("details");details.className="onboarding-submission";details.dataset.checkinId=item.id;details.dataset.userId=item.user_id;
         const summary=document.createElement("summary");
         const info=document.createElement("div");
         const title=document.createElement("strong");
@@ -194,6 +202,14 @@
       status.textContent="We couldn't load check-ins. Please check the table and administrator permissions.";
     }finally{if(refresh)refresh.disabled=false;}
   }
+  window.openAdminCheckinForTask=async(sourceKey,userId)=>{
+    const group=list.closest("details.admin-tool-group");if(group)group.open=true;
+    await load();
+    const id=String(sourceKey||"").slice("weekly-checkin-feedback:".length);
+    const card=[...list.querySelectorAll("[data-checkin-id]")].find(node=>node.dataset.checkinId===id);
+    if(!card)throw new Error("The check-in could not be found.");
+    card.open=true;card.scrollIntoView({behavior:"smooth",block:"center"});
+  };
   refresh?.addEventListener("click",load);
   window.loadAdminCheckins=load;
 })();
