@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
       if (stateError) return reply("Could not start the secure Google Calendar connection.", 500);
       const params = new URLSearchParams({
         client_id: GOOGLE_CLIENT_ID, redirect_uri: REDIRECT_URI, response_type: "code",
-        scope: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/calendar.events",
+        scope: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/calendar.app.created",
         access_type: "offline", prompt: "select_account consent", include_granted_scopes: "true", state,
       });
       return json({ authorization_url: "https://accounts.google.com/o/oauth2/v2/auth?" + params.toString() });
@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
         admin.from("google_calendar_sync_state").select("calendar_id,calendar_name,last_synced_at").eq("id", 1).maybeSingle(),
       ]);
       if (connectionError || calendarError) return reply("Could not check Google Calendar connection.", 500);
-      const hasScope = (connection?.scope || "").split(/\s+/).includes("https://www.googleapis.com/auth/calendar.events");
+      const hasScope = (connection?.scope || "").split(/\s+/).includes("https://www.googleapis.com/auth/calendar.app.created");
       return json({ connected: !!connection?.connected_at && hasScope, calendarName: calendar?.calendar_name || "Reframe Life Coaching", lastSyncedAt: calendar?.last_synced_at || null });
     }
 
@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
       const { data: connection, error: connectionError } = await admin.from("google_drive_connections")
         .select("refresh_token,access_token,access_token_expires_at,scope").eq("id", 1).maybeSingle();
       if (connectionError || !connection?.refresh_token) return reply("Connect Google first.", 409);
-      if (!(connection.scope || "").split(/\s+/).includes("https://www.googleapis.com/auth/calendar.events")) {
+      if (!(connection.scope || "").split(/\s+/).includes("https://www.googleapis.com/auth/calendar.app.created")) {
         return reply("Please connect Google Calendar and approve calendar access first.", 409);
       }
       let accessToken = connection.access_token;
@@ -93,20 +93,13 @@ Deno.serve(async (req) => {
       if (calendarStateError) return reply("Could not read the Reframe Life calendar settings.", 500);
       let calendarId = calendarState?.calendar_id || "";
       if (!calendarId) {
-        const listResponse = await fetch("https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=250", { headers: googleHeaders });
-        const list = await listResponse.json();
-        if (!listResponse.ok) return reply("Google Calendar could not be opened: " + (list.error?.message || listResponse.status), 502);
-        const existingCalendar = (list.items || []).find((item: { summary?: string; primary?: boolean }) => item.summary === "Reframe Life Coaching" && !item.primary);
-        if (existingCalendar?.id) calendarId = existingCalendar.id;
-        else {
-          const createResponse = await fetch("https://www.googleapis.com/calendar/v3/calendars", {
-            method: "POST", headers: googleHeaders,
-            body: JSON.stringify({ summary: "Reframe Life Coaching", description: "Coaching dates managed by Reframe Life." }),
-          });
-          const created = await createResponse.json();
-          if (!createResponse.ok || !created.id) return reply("Google could not create the separate Reframe Life Coaching calendar: " + (created.error?.message || createResponse.status), 502);
-          calendarId = created.id;
-        }
+        const createResponse = await fetch("https://www.googleapis.com/calendar/v3/calendars", {
+          method: "POST", headers: googleHeaders,
+          body: JSON.stringify({ summary: "Reframe Life Coaching", description: "A separate calendar for coaching dates managed by Reframe Life." }),
+        });
+        const created = await createResponse.json();
+        if (!createResponse.ok || !created.id) return reply("Google could not create the separate Reframe Life Coaching calendar: " + (created.error?.message || createResponse.status), 502);
+        calendarId = created.id;
         const { error: saveCalendarError } = await admin.from("google_calendar_sync_state").upsert({
           id: 1, calendar_id: calendarId, calendar_name: "Reframe Life Coaching", connected_at: new Date().toISOString(),
         }, { onConflict: "id" });
@@ -488,7 +481,7 @@ Deno.serve(async (req) => {
       console.error("Could not save Google connection:", saveError);
       return reply("Google connected, but Reframe Life could not save the connection.", 500);
     }
-    const calendarApproved = (tokens.scope || "").split(/\s+/).includes("https://www.googleapis.com/auth/calendar.events");
+    const calendarApproved = (tokens.scope || "").split(/\s+/).includes("https://www.googleapis.com/auth/calendar.app.created");
     return Response.redirect(APP_RETURN_URL + (calendarApproved ? "?google_calendar=connected" : "?google_drive=connected"), 303);
   }
   return reply("Method not allowed.", 405);
