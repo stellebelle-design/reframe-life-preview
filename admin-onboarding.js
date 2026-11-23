@@ -348,5 +348,24 @@
   }catch(error){console.error("Could not load progress review admin:",error);status.textContent="We couldn’t load progress reviews. Please check admin access and try again.";}
   finally{if(refresh)refresh.disabled=false;}
  }
+ window.openAdminProgressReviewForTask=async(sourceKey,userId)=>{
+  const group=root.closest("details.admin-tool-group");if(group)group.open=true;
+  await load();
+  const controls=root.querySelector(".progress-review-controls");
+  const select=controls?.querySelector("select");
+  const start=controls?.querySelector('input[type="date"]');
+  if(!select||!start)throw new Error("Review controls were not loaded.");
+  if(userId&&select.value!==userId){
+   select.value=userId;
+   select.dispatchEvent(new Event("change",{bubbles:true}));
+  }
+  const parts=String(sourceKey||"").split(":");
+  const periodStart=parts[0]==="progress-reflection"||parts[0]==="progress-review-due"?parts.slice(2).join(":"):"";
+  if(periodStart&&start.value!==periodStart){
+   start.value=periodStart;
+   start.dispatchEvent(new Event("change",{bubbles:true}));
+  }
+  root.scrollIntoView({behavior:"smooth",block:"start"});
+ };
  refresh?.addEventListener("click",load);window.loadAdminProgressReviews=load;
 })();

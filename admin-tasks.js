@@ -30,7 +30,20 @@
   const meta=el("div","admin-task-meta");meta.append(el("span",null,task.category||"Task"),el("span",null,task.user_id?(clientNames.get(task.user_id)||"Client"):"General"));
   const due=el("span",!done&&task.due_date&&task.due_date<today()?"admin-task-due-overdue":"",task.due_date?(task.due_date<today()&&!done?"Overdue · ":"Due · ")+dateLabel(task.due_date):"No due date");meta.append(due);main.append(meta);
   if(task.details)main.append(el("p","admin-task-notes",task.details));
-  const actions=el("div","admin-task-actions");const edit=el("button",null,"Edit");edit.type="button";edit.addEventListener("click",()=>openEditor(task));
+  const actions=el("div","admin-task-actions");
+  if(task.category==="Progress review"){
+   const openReview=el("button",null,"Open review");openReview.type="button";
+   openReview.addEventListener("click",async()=>{
+    openReview.disabled=true;openReview.textContent="Opening…";
+    try{
+     if(typeof window.openAdminProgressReviewForTask!=="function")throw new Error("The review workspace is not available.");
+     await window.openAdminProgressReviewForTask(task.source_key,task.user_id);
+    }catch(error){console.error("Could not open progress review from task:",error);status.textContent="Couldn't open the progress review. Open Four-week progress reviews below instead.";}
+    finally{openReview.disabled=false;openReview.textContent="Open review";}
+   });
+   actions.append(openReview);
+  }
+  const edit=el("button",null,"Edit");edit.type="button";edit.addEventListener("click",()=>openEditor(task));
   const remove=el("button",null,"Delete");remove.type="button";remove.addEventListener("click",async()=>{if(!confirm("Delete this task?"))return;const {error}=await db.from("admin_tasks").delete().eq("id",task.id);if(error){status.textContent="Couldn't delete this task. Please try again.";return;}await load();});
   actions.append(edit,remove);row.append(check,main,actions);return row;
  }
