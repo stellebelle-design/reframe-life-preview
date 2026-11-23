@@ -501,14 +501,7 @@
 @media(max-width:650px){.progress-review-queue{padding:14px}.progress-review-queue-row{grid-template-columns:minmax(0,1fr) auto;gap:8px}.progress-review-queue-actions{grid-column:1/-1;justify-self:start}.progress-review-queue-row .admin-row-button{justify-self:start}}
 
 /* Admin workspace quick navigation */
-.admin-workspace-nav{position:sticky;top:10px;z-index:20;display:flex;align-items:center;gap:15px;margin:0 0 28px;padding:11px 14px;background:rgba(255,253,249,.97);border:1px solid var(--line);border-radius:12px;box-shadow:0 5px 18px rgba(70,58,43,.07);backdrop-filter:blur(12px)}
-.admin-workspace-nav-label{flex:0 0 auto;margin:0;color:var(--stone);font-size:.6rem;font-weight:700;letter-spacing:.16em}
-.admin-workspace-nav-links{display:flex;align-items:center;gap:6px;min-width:0;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;padding:1px 1px 4px}
-.admin-workspace-nav a{display:inline-flex;align-items:center;flex:0 0 auto;padding:8px 10px;background:#f7f3ee;border:1px solid #ebe3da;border-radius:8px;color:var(--ink-soft);font-size:.7rem;white-space:nowrap;transition:background .2s,border-color .2s,color .2s}
-.admin-workspace-nav a:hover,.admin-workspace-nav a:focus-visible{background:var(--cream-deep);border-color:var(--stone-light);color:var(--ink)}
-.admin-workspace-nav a:focus-visible{outline:2px solid var(--stone);outline-offset:2px}
 .admin-list-wrap[id]{scroll-margin-top:24px}
-@media(max-width:760px){.admin-workspace-nav{top:6px;gap:10px;padding:9px 10px}.admin-workspace-nav-label{font-size:.55rem}.admin-workspace-nav-links{gap:5px}.admin-workspace-nav a{font-size:.66rem;padding:7px 9px}}
 
 
 /* Admin client communications tracker */
@@ -600,3 +593,22 @@
 .admin-overview-updated{margin:12px 0 0;color:var(--ink-soft);font-size:.68rem}
 @media(max-width:760px){.admin-overview-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-overview{padding:16px}}
 @media(max-width:480px){.admin-overview-heading{flex-direction:column}.admin-overview-grid{gap:8px}.admin-overview-card{min-height:100px;padding:12px}.admin-overview-card strong{font-size:1.45rem}}
+
+/* Collapsible left-side admin navigation */
+.admin-menu-toggle{position:fixed;left:18px;top:108px;z-index:42;width:48px;height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;background:#fffdf9;border:1px solid rgba(156,141,116,.35);border-radius:12px;box-shadow:0 5px 18px rgba(70,58,43,.12);cursor:pointer}
+.admin-menu-toggle:hover{background:#f1ece2}
+.admin-menu-toggle span{display:block;width:19px;height:2px;border-radius:2px;background:#62594f}
+.admin-menu-backdrop{position:fixed;inset:0;z-index:43;background:rgba(33,30,26,.28);backdrop-filter:blur(2px)}
+.admin-side-menu{position:fixed;inset:0 auto 0 0;z-index:44;width:min(310px,86vw);padding:30px 24px;background:#fffdf9;border-right:1px solid rgba(156,141,116,.28);box-shadow:12px 0 38px rgba(40,34,26,.13);transform:translateX(-105%);visibility:hidden;transition:transform .24s ease,visibility .24s ease;overflow-y:auto}
+.admin-side-menu.is-open{transform:translateX(0);visibility:visible}
+.admin-side-menu-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding-bottom:23px;border-bottom:1px solid var(--line)}
+.admin-side-menu-heading .eyebrow{margin:0 0 4px;font-size:.58rem}
+.admin-side-menu-heading h3{margin:0;font:500 1.65rem/1.1 var(--serif);color:var(--ink)}
+.admin-menu-close{width:34px;height:34px;border:1px solid var(--line);border-radius:50%;background:transparent;color:var(--ink-soft);font-size:1.35rem;line-height:1;cursor:pointer}
+.admin-side-menu-label{margin:25px 0 10px;color:var(--stone);font-size:.62rem;font-weight:600;letter-spacing:.16em}
+.admin-side-menu-links{display:grid;gap:5px}
+.admin-side-menu-links a{display:block;padding:11px 12px;border-radius:8px;color:var(--ink-soft);font-size:.86rem;transition:background .18s,color .18s}
+.admin-side-menu-links a:hover,.admin-side-menu-links a:focus-visible{background:#f3efe7;color:var(--ink);outline:none}
+.admin-side-menu-foot{margin:28px 0 0;padding-top:17px;border-top:1px solid var(--line);color:var(--stone);font:italic .95rem var(--serif)}
+@media(max-width:600px){.admin-menu-toggle{top:100px;left:12px;width:44px;height:44px}.admin-side-menu{padding:25px 20px}}
+@media(prefers-reduced-motion:reduce){.admin-side-menu{transition:none}}
