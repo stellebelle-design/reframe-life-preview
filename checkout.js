@@ -182,6 +182,15 @@
     showAccountStatus("The account service hasn't loaded. Please refresh and try again.", true);
   }
 
+  const consentPanel = document.querySelector("#purchase-consents");
+  const termsAccepted = document.querySelector("#terms-accepted");
+  const earlyServiceStart = document.querySelector("#early-service-start");
+  const earlyDigitalSupply = document.querySelector("#early-digital-supply");
+  const consentHelp = document.querySelector("#consent-help");
+  const consentContinue = document.querySelector("#consent-continue");
+  const consentBack = document.querySelector("#consent-back");
+  let chosenProductKey = null;
+
   productButtons.forEach((button) => {
     button.addEventListener("click", async () => {
       if (!supabase) return;
@@ -191,65 +200,112 @@
         showAccountStatus("Please sign in before choosing a programme.", true);
         return;
       }
-      productButtons.forEach((item) => { item.disabled = true; });
-      showStatus("Preparing your secure checkout…");
-      try {
-        if (!window.REFRAME_STRIPE_PUBLISHABLE_KEY || window.REFRAME_STRIPE_PUBLISHABLE_KEY.includes("REPLACE")) {
-          throw new Error("Stripe checkout is being configured and is not ready to accept payments yet.");
-        }
-        const { data, error } = await supabase.functions.invoke("create-checkout-session", {
-          body: { productKey: button.dataset.product }
-        });
-        if (error) {
-          let detail = error.message || "The checkout request failed.";
-          try {
-            const response = error.context;
-            if (response && typeof response.json === "function") {
-              const body = await response.json();
-              if (body?.error) detail = body.error;
-            }
-          } catch (_) {}
-          throw new Error(detail);
-        }
-        if (!data?.client_secret) throw new Error(data?.error || "Stripe did not return a checkout session.");
+      chosenProductKey = button.dataset.product;
+      termsAccepted.checked = false;
+      earlyServiceStart.checked = false;
+      earlyDigitalSupply.checked = false;
+      consentHelp.textContent = "";
+      panel.hidden = true;
+      consentPanel.hidden = false;
+      consentPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
 
-        const stripe = Stripe(window.REFRAME_STRIPE_PUBLISHABLE_KEY);
-        const checkout = stripe.initCheckoutFormSdk({ clientSecret: data.client_secret, appearance });
-        const form = checkout.createForm({ layout: "expanded" });
-        panel.hidden = false;
-        form.mount("#checkout-form");
+  consentBack.addEventListener("click", () => {
+    consentPanel.hidden = true;
+    showStatus("");
+  });
 
-        const loadActionsResult = await checkout.loadActions();
-        if (loadActionsResult.type !== "success") {
-          throw new Error("The payment form could not be loaded. Please refresh and try again.");
-        }
-        form.on("confirm", async (event) => {
-          try {
-            const confirmationUrl = new URL("order-confirmed.html", window.location.href);
-            confirmationUrl.searchParams.set("programme", button.dataset.product);
-            const confirmationResult = await loadActionsResult.actions.confirm({
-              formConfirmEvent: event,
-              returnUrl: confirmationUrl.href
-            });
-            if (confirmationResult?.type === "success") {
-              window.location.assign(confirmationUrl.href);
-            } else if (confirmationResult?.type === "error") {
-              const detail = confirmationResult.error?.message || "Please check your payment details and try again.";
-              showStatus("Stripe couldn't confirm the payment: " + detail, true);
-            }
-          } catch (error) {
-            console.error("Stripe payment confirmation error:", error);
-            const detail = error?.message || error?.type || "Unknown Stripe confirmation error";
+  consentContinue.addEventListener("click", async () => {
+    if (!chosenProductKey) {
+      showStatus("Please choose a programme first.", true);
+      return;
+    }
+    if (!termsAccepted.checked) {
+      consentHelp.textContent = "Please confirm that you have read and agree to the Terms & Conditions before continuing.";
+      consentHelp.style.color = "#a33b35";
+      termsAccepted.focus();
+      return;
+    }
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) {
+      lockCheckout();
+      showAccountStatus("Your session has expired. Please sign in again.", true);
+      return;
+    }
+
+    consentContinue.disabled = true;
+    productButtons.forEach((item) => { item.disabled = true; });
+    showStatus("Preparing your secure checkout…");
+    consentHelp.textContent = "Your choices are being recorded with your checkout.";
+    consentHelp.style.color = "inherit";
+    try {
+      if (!window.REFRAME_STRIPE_PUBLISHABLE_KEY || window.REFRAME_STRIPE_PUBLISHABLE_KEY.includes("REPLACE")) {
+        throw new Error("Stripe checkout is being configured and is not ready to accept payments yet.");
+      }
+      const consentChoices = {
+        productKey: chosenProductKey,
+        termsAccepted: true,
+        termsVersion: "2026-11-23",
+        earlyServiceStartRequested: earlyServiceStart.checked,
+        earlyDigitalSupplyConsent: earlyDigitalSupply.checked,
+        digitalCancellationRightAcknowledged: earlyDigitalSupply.checked
+      };
+      const { data, error } = await supabase.functions.invoke("create-checkout-session", {
+        body: consentChoices
+      });
+      if (error) {
+        let detail = error.message || "The checkout request failed.";
+        try {
+          const response = error.context;
+          if (response && typeof response.json === "function") {
+            const body = await response.json();
+            if (body?.error) detail = body.error;
+          }
+        } catch (_) {}
+        throw new Error(detail);
+      }
+      if (!data?.client_secret) throw new Error(data?.error || "Stripe did not return a checkout session.");
+
+      const stripe = Stripe(window.REFRAME_STRIPE_PUBLISHABLE_KEY);
+      const checkout = stripe.initCheckoutFormSdk({ clientSecret: data.client_secret, appearance });
+      const form = checkout.createForm({ layout: "expanded" });
+      panel.hidden = false;
+      form.mount("#checkout-form");
+
+      const loadActionsResult = await checkout.loadActions();
+      if (loadActionsResult.type !== "success") {
+        throw new Error("The payment form could not be loaded. Please refresh and try again.");
+      }
+      form.on("confirm", async (event) => {
+        try {
+          const confirmationUrl = new URL("order-confirmed.html", window.location.href);
+          confirmationUrl.searchParams.set("programme", chosenProductKey);
+          const confirmationResult = await loadActionsResult.actions.confirm({
+            formConfirmEvent: event,
+            returnUrl: confirmationUrl.href
+          });
+          if (confirmationResult?.type === "success") {
+            window.location.assign(confirmationUrl.href);
+          } else if (confirmationResult?.type === "error") {
+            const detail = confirmationResult.error?.message || "Please check your payment details and try again.";
             showStatus("Stripe couldn't confirm the payment: " + detail, true);
           }
-        });
-        showStatus("Your secure payment form is ready.");
-        panel.scrollIntoView({ behavior: "smooth", block: "start" });
-      } catch (error) {
-        console.error("Reframe Life checkout error:", error);
-        showStatus(error.message || "We couldn't start checkout. Please try again.", true);
-        productButtons.forEach((item) => { item.disabled = false; });
-      }
-    });
+        } catch (error) {
+          console.error("Stripe payment confirmation error:", error);
+          const detail = error?.message || error?.type || "Unknown Stripe confirmation error";
+          showStatus("Stripe couldn't confirm the payment: " + detail, true);
+        }
+      });
+      consentPanel.hidden = true;
+      showStatus("Your secure payment form is ready.");
+      panel.scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch (error) {
+      console.error("Reframe Life checkout error:", error);
+      showStatus(error.message || "We couldn't start checkout. Please try again.", true);
+      productButtons.forEach((item) => { item.disabled = false; });
+    } finally {
+      consentContinue.disabled = false;
+    }
   });
 })();
