@@ -1,7 +1,6 @@
 /* Admin-only client communication task tracker. RLS is enforced by Supabase. */
 (function initialiseClientCommunications(){
   const client=window.reframeSupabaseClient;
-  const root=document.querySelector("#clientCommunicationsList");
   const status=document.querySelector("#clientCommunicationsMessage");
   const refresh=document.querySelector("#refreshClientCommunications");
   const form=document.querySelector("#clientCommunicationForm");
@@ -10,7 +9,7 @@
   const detailsInput=document.querySelector("#communicationDetails");
   const saveButton=document.querySelector("#saveCommunicationTask");
   const formMessage=document.querySelector("#communicationFormMessage");
-  if(!client||!root||!status||!form||!clientSelect)return;
+  if(!client||!status||!form||!clientSelect)return;
 
   const make=(tag,cls,text)=>{const el=document.createElement(tag);if(cls)el.className=cls;if(text!==undefined)el.textContent=text;return el;};
   const dateLabel=value=>value?new Date(value).toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"}):"";
@@ -80,32 +79,19 @@
   }
 
   async function load(){
-    status.textContent="Loading communication tasks…";root.replaceChildren();
+    status.textContent="Refreshing communication summary…";
     if(refresh)refresh.disabled=true;
     try{
       await loadClients();
-      const {data,error}=await client.from("client_communication_tasks")
-        .select("id,user_id,communication_type,details,status,created_at,sent_at")
-        .order("created_at",{ascending:false});
+      const {data,error}=await client.from("client_communication_tasks").select("id,status").order("created_at",{ascending:false});
       if(error)throw error;
-      const tasks=data||[];
-      const pending=tasks.filter(item=>item.status==="pending");
-      const sent=tasks.filter(item=>item.status==="sent");
-      status.textContent=tasks.length+" message task"+(tasks.length===1?"":"s")+" · "+pending.length+" outstanding · "+sent.length+" sent";
-      const pendingSection=make("section","communication-task-group");
-      pendingSection.append(make("h4",null,"To do"));
-      if(pending.length)pending.forEach(item=>pendingSection.append(renderTask(item)));
-      else pendingSection.append(make("p","communication-empty","Nothing outstanding. You're all caught up."));
-      root.append(pendingSection);
-      const sentSection=make("details","communication-sent-group");
-      const summary=make("summary",null,"Sent messages ("+sent.length+")");
-      sentSection.append(summary);
-      if(sent.length)sent.forEach(item=>sentSection.append(renderTask(item)));
-      else sentSection.append(make("p","communication-empty","Messages you mark as sent will appear here."));
-      root.append(sentSection);
+      const items=data||[];
+      const pending=items.filter(item=>item.status==="pending").length;
+      const sent=items.filter(item=>item.status==="sent").length;
+      status.textContent=pending+" outstanding message"+(pending===1?"":"s")+" · "+sent+" sent. Outstanding messages appear in My Tasks above.";
     }catch(error){
-      console.error("Could not load communication tasks:",error);
-      status.textContent="We couldn't load the communications tracker. Please check the database setup and admin access.";
+      console.error("Could not load communication summary:",error);
+      status.textContent="We couldn't load the communications summary. Please check the database setup and admin access.";
     }finally{if(refresh)refresh.disabled=false;}
   }
 
@@ -122,7 +108,8 @@
       });
       if(error)throw error;
       detailsInput.value="";
-      formMessage.textContent="Message task added.";
+      formMessage.textContent="Message task added — it will appear in My Tasks above.";
+      if(typeof window.loadAdminTasks==="function")await window.loadAdminTasks();
       await load();
     }catch(error){
       console.error("Could not add communication task:",error);

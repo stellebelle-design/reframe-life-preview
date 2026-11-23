@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Jost:wght@300;400;500;600&family=Petit+Formal+Script&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="client-hub.css?v=20261122-task-centre-1">
+  <link rel="stylesheet" href="client-hub.css?v=20261123-task-progress-1">
 <style>
 .sidebar-view-switch{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:0 0 18px;padding:4px;background:#f3eee9;border-radius:12px}
 .sidebar-view-switch button{border:0;background:transparent;border-radius:9px;padding:9px 8px;font-family:var(--serif);font-size:16px;font-weight:500;letter-spacing:.015em;line-height:1.2;color:#625b55;cursor:pointer;transition:background .2s,color .2s,box-shadow .2s}
@@ -155,6 +155,7 @@
         <section class="admin-task-centre" id="adminTaskCentre">
           <div class="admin-task-centre-heading"><div><p class="eyebrow">YOUR DAILY OVERVIEW</p><h3>My tasks</h3><p>One place for client actions, follow-ups and the little things you want to remember.</p></div><button type="button" class="admin-save" id="openAdminTaskEditor">+ Add a task</button></div>
           <div class="admin-task-summary" id="adminTaskSummary">Loading your tasks…</div>
+          <div class="admin-task-progress" aria-label="Task completion progress"><div class="admin-task-progress-label"><span id="adminTaskProgressLabel">Getting your task progress…</span><strong id="adminTaskProgressPercent">0%</strong></div><progress id="adminTaskProgress" max="100" value="0">0%</progress></div>
           <div id="adminTaskList" class="admin-task-list"></div>
           <details class="admin-completed-tasks"><summary>Completed tasks <span id="adminCompletedCount">(0)</span></summary><div id="adminCompletedTaskList"></div></details>
           <p id="adminTaskMessage" class="admin-status" role="status" aria-live="polite"></p>
@@ -204,17 +205,6 @@
           <p id="programmeReadinessMessage" class="admin-status" role="status" aria-live="polite">Client questionnaires will appear here.</p>
           <div id="programmeReadinessList" class="onboarding-admin-list"></div>
         </div>
-        <div class="admin-list-wrap client-communications-wrap" id="adminCommunications">
-          <div class="admin-submissions-heading"><div><h3>Client communications</h3><p class="section-intro">Keep track of welcome messages, programme emails, progress follow-ups and coaching end messages.</p></div><button type="button" class="admin-row-button" id="refreshClientCommunications">Refresh tasks</button></div>
-          <form id="clientCommunicationForm" class="communication-form">
-            <label>Client<select id="communicationClient" required><option value="">Loading clients…</option></select></label>
-            <label>Message type<select id="communicationType" required><option>Welcome message</option><option>Programme email</option><option>Progress review follow-up</option><option>Coaching ending message</option><option>Other</option></select></label>
-            <label class="communication-details-field">What do you need to send?<textarea id="communicationDetails" rows="2" maxlength="1000" placeholder="A short reminder of what the message needs to include…"></textarea></label>
-            <div class="communication-form-actions"><button type="submit" class="admin-save" id="saveCommunicationTask">Add to to-do list</button><p id="communicationFormMessage" role="status" aria-live="polite"></p></div>
-          </form>
-          <p id="clientCommunicationsMessage" class="admin-status" role="status" aria-live="polite">Your communication tasks will appear here.</p>
-          <div id="clientCommunicationsList"></div>
-        </div>
         <div class="admin-list-wrap client-retention-admin-wrap" id="adminDataRetention">
           <div class="admin-submissions-heading"><div><h3>Coaching end dates &amp; data retention</h3><p class="section-intro">When a client's coaching has actually ended, record the date here. Their coaching information is then due for secure deletion six months later. Payment and accounting records are kept separately.</p></div><button type="button" class="admin-row-button" id="refreshClientRetentionAdmin">Refresh clients</button></div>
           <p id="clientRetentionAdminMessage" class="admin-status" role="status" aria-live="polite">Client retention dates will appear here.</p>
@@ -224,6 +214,17 @@
           <div class="admin-submissions-heading"><div><h3>Client questionnaires</h3><p class="section-intro">Private submissions from clients with paid or active programmes.</p></div><button type="button" class="admin-row-button" id="refreshOnboarding">Refresh submissions</button></div>
           <p id="onboardingAdminMessage" class="admin-status" role="status" aria-live="polite">Submissions will appear here.</p>
           <div id="onboardingAdminList" class="onboarding-admin-list"></div>
+        </div>
+        <div class="admin-list-wrap client-communications-wrap" id="adminCommunications">
+          <div class="admin-submissions-heading"><div><h3>Client communications</h3><p class="section-intro">Keep track of welcome messages, programme emails, progress follow-ups and coaching end messages.</p></div><button type="button" class="admin-row-button" id="refreshClientCommunications">Refresh tasks</button></div>
+          <form id="clientCommunicationForm" class="communication-form">
+            <label>Client<select id="communicationClient" required><option value="">Loading clients…</option></select></label>
+            <label>Message type<select id="communicationType" required><option>Welcome message</option><option>Programme email</option><option>Progress review follow-up</option><option>Coaching ending message</option><option>Other</option></select></label>
+            <label class="communication-details-field">What do you need to send?<textarea id="communicationDetails" rows="2" maxlength="1000" placeholder="A short reminder of what the message needs to include…"></textarea></label>
+            <div class="communication-form-actions"><button type="submit" class="admin-save" id="saveCommunicationTask">Add to to-do list</button><p id="communicationFormMessage" role="status" aria-live="polite"></p></div>
+          </form>
+          <p id="clientCommunicationsMessage" class="admin-status" role="status" aria-live="polite">Your communication tasks will appear here.</p>
+          <p class="communication-central-note">Outstanding messages are shown in <a href="#adminTaskCentre">My Tasks at the top of this page</a>. Sent messages are included in the completed task history there.</p>
         </div>
       </section>
 
@@ -306,8 +307,8 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
   <script src="client-hub.js?v=20261122-task-centre-1"></script>
-  <script src="client-communications.js?v=20261122-1"></script>
-  <script src="admin-tasks.js?v=20261123-review-actions-1"></script>
+  <script src="client-communications.js?v=20261123-task-progress-1"></script>
+  <script src="admin-tasks.js?v=20261123-task-progress-1"></script>
   <script src="admin-onboarding.js?v=20261123-review-actions-1"></script>
   <script src="google-drive-picker.js?v=20261119-master-direct"></script>
 </body>

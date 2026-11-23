@@ -571,3 +571,15 @@
 .admin-task-dialog-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:5px}
 .admin-task-dialog-actions p{width:100%;margin:0;color:var(--sage);font-size:.75rem}
 @media(max-width:600px){.admin-task-centre{padding:16px}.admin-task-centre-heading{align-items:flex-start;flex-direction:column}.admin-task-row{grid-template-columns:auto minmax(0,1fr)}.admin-task-actions{grid-column:2}.admin-task-dialog{padding:34px 22px}}
+
+/* Central task completion progress */
+.admin-task-progress{margin:0 0 16px;padding:13px 15px;background:#fffdf9;border:1px solid rgba(156,141,116,.2);border-radius:10px}
+.admin-task-progress-label{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px;color:var(--ink-soft);font-size:.72rem}
+.admin-task-progress-label strong{color:var(--ink);font-size:.78rem;font-weight:600;font-variant-numeric:tabular-nums}
+.admin-task-progress progress{display:block;width:100%;height:9px;border:0;border-radius:999px;overflow:hidden;background:#eee8df;accent-color:var(--sage)}
+.admin-task-progress progress::-webkit-progress-bar{background:#eee8df;border-radius:999px}
+.admin-task-progress progress::-webkit-progress-value{background:#87977e;border-radius:999px;transition:width .35s ease}
+.admin-task-progress progress::-moz-progress-bar{background:#87977e;border-radius:999px;transition:width .35s ease}
+.communication-central-note{margin:14px 0 0;padding:12px 14px;background:#f8f5ef;border:1px solid rgba(156,141,116,.2);border-radius:9px;color:var(--ink-soft);font-size:.76rem}
+.communication-central-note a{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+@media(max-width:600px){.admin-task-progress{padding:12px}}

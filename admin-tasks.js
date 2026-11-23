@@ -66,6 +66,11 @@
    open.sort((a,b)=>(a.due_date||"9999").localeCompare(b.due_date||"9999")||b.created_at.localeCompare(a.created_at));
    done.sort((a,b)=>(b.completed_at||"").localeCompare(a.completed_at||""));
    summary.textContent=open.length?open.length+" task"+(open.length===1?"":"s")+" to do"+(open.some(x=>x.due_date&&x.due_date<today())?" · includes overdue tasks":""):"You're all caught up — no outstanding tasks.";
+   const total=tasks.length,percent=total?Math.round((done.length/total)*100):0;
+   const progress=$("adminTaskProgress"),progressLabel=$("adminTaskProgressLabel"),progressPercent=$("adminTaskProgressPercent");
+   if(progress)progress.value=percent;
+   if(progressLabel)progressLabel.textContent=total?done.length+" of "+total+" tasks completed":"Your progress will appear as you add tasks";
+   if(progressPercent)progressPercent.textContent=percent+"%";
    if(open.length)open.forEach(x=>root.append(renderTask(x)));else root.append(el("p","communication-empty","Nothing outstanding. Add a task whenever something needs doing."));
    done.forEach(x=>completedRoot.append(renderTask(x,true)));$("adminCompletedCount").textContent="("+done.length+")";
   }catch(error){console.error("Could not load admin tasks:",error);summary.textContent="We couldn't load your tasks. Please check the task-centre database setup and admin access.";}
